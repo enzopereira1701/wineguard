@@ -1,0 +1,7 @@
+.env 
+hardware/firmware/**/config.h
+__pycache__/ 
+venv/ 
+*.db 
+node_modules/ 
+dist/  
