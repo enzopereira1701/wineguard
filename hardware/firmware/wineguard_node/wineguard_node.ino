@@ -95,6 +95,12 @@
 #define ALTA_CONTINUO 1
 #endif
 
+// Sufixo do clientId MQTT. Dois clientes com o mesmo clientId se derrubam no broker.
+// No config.h do WOKWI coloque:  #define CLIENT_SUFIXO "_sim"
+#ifndef CLIENT_SUFIXO
+#define CLIENT_SUFIXO ""
+#endif
+
 // Botao: a polaridade e descoberta sozinha ao ligar (NAO aperte o botao nessa hora).
 // Para forcar, coloque no config.h:  #define BOTAO_PRESSIONADO HIGH  (ou LOW).
 
@@ -790,7 +796,7 @@ void setup() {
   snprintf(topicAttrs, sizeof(topicAttrs), "/%s/%s/attrs", API_KEY, DEVICE_ID);
   snprintf(topicCmd, sizeof(topicCmd), "/%s/%s/cmd", API_KEY, DEVICE_ID);
   snprintf(topicCmdExe, sizeof(topicCmdExe), "/%s/%s/cmdexe", API_KEY, DEVICE_ID);
-  snprintf(clientId, sizeof(clientId), "wineguard_%s", DEVICE_ID);
+  snprintf(clientId, sizeof(clientId), "wineguard_%s%s", DEVICE_ID, CLIENT_SUFIXO);
 
   WiFi.mode(WIFI_STA);
   MQTT.setServer(MQTT_BROKER, MQTT_PORT);
