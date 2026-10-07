@@ -49,7 +49,7 @@ Atualizado em 06/10/2026. Este README descreve só o que existe; o que ainda est
 | Node: hardware e firmware 2.3 | **Pronto e testado na bancada** (sem nuvem) e no Wokwi |
 | Plataforma FIWARE na AWS | **Provada**: dados e histórico chegam; o comando `mute` chega ao Node (testado com o Wokwi) |
 | Cadastro de dispositivo (`provisionar.sh`) | **Pronto** |
-| Dashboard (front-end) | **Construído com dados de demonstração**. Falta rodar no PC do grupo e ligar ao backend |
+| Dashboard (front-end) | **Rodando com dados de demonstração**. Falta ligar ao backend e publicar na Vercel |
 | Backend (FastAPI) | **Em construção** |
 | Docker Compose, DuckDNS e HTTPS | **Em construção** |
 | Caixa 3D | Modelada; **impressão em andamento** |
@@ -284,9 +284,7 @@ WiFiManager (configurar o Wi-Fi sem regravar), um buzzer passivo para diferencia
 
 **marcha.dev**
 
-| Integrante | Responsabilidade |
-|---|---|
-| Enzo Pereira | Hardware, firmware, backend e plataforma |
-| _(nome)_ | Dashboard em React |
-| _(nome)_ | Caixa 3D |
-| _(nome)_ | _(preencher)_ |
+- Enzo Pereira
+- Raphael Mascarenhas
+- Yannick Davila
+- Alysson Souto

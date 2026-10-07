@@ -8,7 +8,7 @@ Ficha de decisões do **CP5 Vinheria Full** (marcha.dev). Cole este arquivo no c
   - **Cloud:** a plataforma (FIWARE, backend e banco de dados do Orion)
   - **Dashboard:** o site em React
 - **Entrega e hands-on:** 30/10/2026
-- **Integrantes:** _(preencher)_
+- **Integrantes:** Enzo Pereira, Raphael Mascarenhas, Yannick Davila e Alysson Souto
 - **Última atualização desta ficha:** 06/10/2026
 
 ---
