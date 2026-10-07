@@ -279,6 +279,8 @@ WiFiManager (configurar o Wi-Fi sem regravar), um buzzer passivo para diferencia
 - Este projeto foi desenvolvido com apoio de assistentes de IA (Claude, da Anthropic) em planejamento, código e documentação.
   O grupo testou o que está descrito como "pronto".
 - Fontes das referências de guarda em [`docs/referencias.md`](docs/referencias.md).
+- Fotos do site (adega, termômetro, rolha, garrafa com luz e vinhedo): **geradas com IA** (ChatGPT) a partir de prompts escritos pelo grupo. Não são fotos reais.
+- Ícones do site: desenhados pelo grupo em SVG, no mesmo traço.
 
 ## Equipe
 

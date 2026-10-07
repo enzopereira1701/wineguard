@@ -275,12 +275,13 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Firmware 2.3** testado na bancada (sem nuvem) e no Wokwi; esquema de ligação e lista de materiais
 - FIWARE na AWS com dados e histórico (8666), e comando `mute` testado (com o Wokwi)
 - `provisionar.sh` com cadastro correto (com `apikey`)
-- **Dashboard (front-end)** com dados de demonstração, guia em PDF e contrato da API
+- **Dashboard (front-end)** rodando no PC com dados de demonstração, redesenhado (navegação, cartões, imagens, rodapé), com contrato da API
 - Todas as definições deste documento
 
 ### Falta
 - **Backend (FastAPI):** tudo. É o caminho crítico.
-- **Dashboard:** rodar no PC do grupo, corrigir o que aparecer, ligar ao backend e publicar na Vercel.
+- **Dashboard:** ligar ao backend, enviar para o `frontend/` do GitHub e publicar na Vercel.
+- **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; publicar na Vercel junto com o dashboard.
 - **Hardware:** testar o Node com a nuvem; montar na caixa 3D (a faculdade imprime); fotos.
 - **Nuvem:** conta DuckDNS; `docker-compose.yml`, Caddy (HTTPS); fechar portas; testar parar e iniciar o lab.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
@@ -288,8 +289,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 ### Cronograma (8 a 30/10)
 | Período | Foco |
 |---|---|
-| 6 a 11/10 | Dashboard rodando no PC; Node na bancada com a nuvem; início do backend (leitura, cadastro, comandos, triggers e loop de alertas) |
-| 12 a 18/10 | Backend completo (vinherias, suspensão, estabilidade); integração do front; teste ponta a ponta com o Node físico; `AVALIACAO_LOCAL_SEMPRE` em 0 |
+| 7 a 11/10 | Backend (leitura, cadastro, comandos, triggers, loop de alertas, vinherias e suspensão); Node físico na nuvem |
+| 12 a 18/10 | Integração do front com o backend; teste ponta a ponta com o Node físico; `AVALIACAO_LOCAL_SEMPRE` em 0; dashboard no GitHub (16/10); portfólio entregue pelo colega |
 | 19 a 25/10 | DuckDNS, Compose, Caddy, HTTPS; Vercel; testes na nuvem e no celular; ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms |
 | 30/10 | Hands-on |

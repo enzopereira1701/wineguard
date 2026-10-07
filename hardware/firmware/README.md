@@ -29,15 +29,16 @@ Arquitetura (FreeRTOS): o `loop()` cuida de Wi-Fi, MQTT, sensores e telemetria; 
 
    | Biblioteca | Versão usada |
    |---|---|
-   | PubSubClient | _(anotar)_ |
-   | Adafruit GFX Library | _(anotar)_ |
-   | Adafruit SSD1306 | _(anotar)_ |
-   | DHT sensor library | _(anotar)_ |
-   | Adafruit Unified Sensor (dependência) | _(anotar)_ |
+   | PubSubClient | 2.8 |
+   | Adafruit GFX Library | 1.12.6 |
+   | Adafruit SSD1306 | 2.5.17 |
+   | DHT sensor library | 1.4.7 |
+   | Adafruit Unified Sensor (dependência) | 1.1.15 |
+   | Adafruit BusIO (dependência) | 1.17.4 |
 
    Para ver as versões instaladas: Gerenciar Bibliotecas, filtro "Instaladas". Pacote esp32 usado na bancada: **3.3.11**.
 3. Copie `config.example.h` para `config.h` (mesma pasta) e preencha. Na bancada, `SIMULACAO_WOKWI` é **0**.
-4. Selecione a placa **ESP32 Dev Module** e a porta COM. Abra o monitor serial em **115200**.
+4. Selecione a placa **DOIT ESP32 DEVKIT V1** (na bancada; a **ESP32 Dev Module** também funciona) e a porta COM.
 5. Grave. Se aparecer `Invalid head of packet (0x80)`, baixe o **Upload Speed** para 115200, use um cabo USB curto e de dados,
    ligado direto no computador, e feche outros programas que usem a porta.
 
