@@ -34,4 +34,14 @@ avisa quando a temperatura varia mais de **2 °C em 24 horas** (limite configur�
 - Nicolas Feuillatte: https://nicolas-feuillatte.com/en/blogs/articles/la-conservation-du-champagne-quelle-temperature-et-autres-astuces
 - Forbes Brasil: https://forbes.com.br/forbeswsb/2025/09/como-armazenar-vinho-em-casa-dicas-para-tintos-brancos-e-espumantes/
 
-**Ainda a conferir:** Embrapa Uva e Vinho e a ABS (Associação Brasileira de Sommeliers).
+## Fontes institucionais brasileiras
+
+Foram consultados o material da **Embrapa Uva e Vinho** e o da **ABS (Associação Brasileira de Sommeliers)**.
+O que encontramos trata da **elaboração** do vinho (por exemplo, a temperatura da fermentação malolática e boas
+práticas de produção) e não da **guarda** da garrafa engarrafada. Por isso não foram usados para definir as faixas do sistema.
+
+## Limitações
+
+- As faixas são recomendações, e não uma norma. O usuário pode escolher "Personalizado" e ajustar.
+- O DHT22 tem margem de ±0,5 °C, e por isso o sistema avisa quando a faixa de temperatura fica mais estreita que 1 °C.
+- O LDR mede luz em porcentagem relativa, e não em lux.
