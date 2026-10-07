@@ -9,7 +9,7 @@ Ficha de decisões do **CP5 Vinheria Full** (marcha.dev). Cole este arquivo no c
   - **Dashboard:** o site em React
 - **Entrega e hands-on:** 30/10/2026
 - **Integrantes:** Enzo Pereira, Raphael Mascarenhas, Yannick Davila e Alysson Souto
-- **Última atualização desta ficha:** 06/10/2026
+- **Última atualização desta ficha:** 07/10/2026
 
 ---
 
@@ -277,13 +277,15 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - `provisionar.sh` com cadastro correto (com `apikey`)
 - **Dashboard (front-end)** rodando no PC com dados de demonstração, redesenhado (navegação, cartões, imagens, rodapé), com contrato da API
 - Todas as definições deste documento
+- **Backend 1** (FastAPI): leitura atual e histórico, testados com dados reais do Orion e do STH-Comet (07/10)
+- Conta DuckDNS criada (`wineguard-cp5.duckdns.org`; atualização do IP ainda manual)
 
 ### Falta
-- **Backend (FastAPI):** tudo. É o caminho crítico.
+- **Backend (FastAPI):** faltam o Backend 2 (cadastro de dispositivo, resumo e comandos), o 3 (triggers e laço de alerta de 5 s) e o 4 (vinherias, adegas, suspensão, estabilidade). É o caminho crítico.
 - **Dashboard:** ligar ao backend, enviar para o `frontend/` do GitHub e publicar na Vercel.
 - **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; publicar na Vercel junto com o dashboard.
 - **Hardware:** testar o Node com a nuvem; montar na caixa 3D (a faculdade imprime); fotos.
-- **Nuvem:** conta DuckDNS; `docker-compose.yml`, Caddy (HTTPS); fechar portas; testar parar e iniciar o lab.
+- **Nuvem:** `docker-compose.yml`, Caddy (HTTPS); fechar portas; testar parar e iniciar o lab.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
@@ -308,3 +310,27 @@ O hands-on vale 40 % e o front 20 %: o mínimo que não pode falhar é o Node en
 3. Ligar o Node e confirmar que ele aparece online.
 4. Plano B: hotspot do celular, vídeo gravado e o Wokwi aberto.
 5. Ao terminar: **End Lab**.
+
+
+---
+
+## 14. Aprendizados da Parte B (07/10/2026): primeiro teste com dados reais
+
+**Online/offline usa o `TimeInstant`, não o `dateModified`.**
+O Orion só atualiza o `dateModified` de uma variável quando o valor muda. Com a leitura parada
+(simulador ou adega estável) o Node parecia offline mesmo enviando. O IoT Agent grava o
+`TimeInstant` a cada mensagem, então o backend usa ele e deixa o `dateModified` de reserva.
+
+**Cada dispositivo MQTT precisa de um `clientId` único.**
+Dois clientes com o mesmo `clientId` se derrubam em loop no Mosquitto. A simulação do Wokwi usa
+o sufixo `_sim` (`wineguard_wgn001_sim`) para não brigar com o ESP32 físico.
+
+**O histórico do STH-Comet tem lacunas.**
+O STH só grava quando o Orion avisa que algo mudou, então há pontos só em alguns minutos. O
+dashboard precisa lidar com isso (ligar os pontos no gráfico ou preencher os buracos no backend).
+
+**O Wokwi desacelera em aba escondida.**
+Para testar, deixar a janela do Wokwi visível ao lado do `/docs`. É só do simulador.
+
+**Operação do lab:** os containers sobem sozinhos quando o lab liga e o cadastro do `wgn001`
+sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
