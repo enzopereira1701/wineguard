@@ -91,8 +91,21 @@ def _valor(entidade: dict, nome: str):
 
 
 def _modificado_em(entidade: dict):
-    """Quando a leitura chegou: o dateModified mais recente das 3 variáveis."""
+    """
+    Quando a leitura chegou.
+
+    O Orion só muda o dateModified de uma variável quando o VALOR muda: com a leitura parada
+    (simulador, adega estável) ele fica velho e o Node pareceria offline. Por isso vale o
+    TimeInstant, que o IoT Agent grava a cada mensagem recebida. O dateModified das 3 variáveis
+    fica de reserva (vale o mais recente dos dois).
+    """
     datas = []
+    instante = entidade.get("TimeInstant")
+    if isinstance(instante, dict) and instante.get("value"):
+        try:
+            datas.append(ler_iso(instante["value"]))
+        except ValueError:
+            pass
     for nome in VARIAVEIS:
         atributo = entidade.get(nome)
         if isinstance(atributo, dict):
@@ -100,7 +113,7 @@ def _modificado_em(entidade: dict):
             if meta.get("value"):
                 datas.append(ler_iso(meta["value"]))
     return max(datas) if datas else None
-
+    
 
 def montar_atual(device_id: str, entidade, agora: datetime, offline_segundos: int = 30) -> dict:
     """

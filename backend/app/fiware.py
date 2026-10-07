@@ -35,7 +35,7 @@ async def obter_entidade(cliente: httpx.AsyncClient, entidade: str):
             f"{config.ORION_URL}/v2/entities/{entidade}",
             params={
                 "type": config.TIPO_ENTIDADE,
-                "attrs": "temperature,humidity,luminosity,state,muted,rssi,firmware",
+                "attrs": "temperature,humidity,luminosity,state,muted,rssi,firmware,TimeInstant",
                 "metadata": "dateModified",
             },
             headers=cabecalhos(),
