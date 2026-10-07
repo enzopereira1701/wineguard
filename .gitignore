@@ -1,7 +1,22 @@
-.env 
+# Segredos e configuracao local (NUNCA vao para o GitHub)
+.env
+.env.*
+!.env.example
 hardware/firmware/**/config.h
-__pycache__/ 
-venv/ 
-*.db 
-node_modules/ 
-dist/  
+frontend/.env
+
+# Python (backend)
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.db
+
+# Node / React (frontend)
+node_modules/
+dist/
+
+# Sistema e logs
+.DS_Store
+Thumbs.db
+*.log

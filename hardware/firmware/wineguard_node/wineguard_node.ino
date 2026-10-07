@@ -10,7 +10,7 @@
 //   /<API_KEY>/<DEVICE_ID>/cmd     -> comandos   (nuvem -> Node)
 //   /<API_KEY>/<DEVICE_ID>/cmdexe  -> resposta   (Node -> nuvem)
 //
-// Telemetria: t|24.5|h|60.0|l|35|st|ok|mu|0|rs|-60|fw|2.0
+// Telemetria: t|24.5|h|60.0|l|35|st|ok|mu|0|rs|-60|fw|2.3
 // Comandos  : <DEVICE_ID>@<comando>|<parametros separados por virgula>
 //   setTriggers|tmin,tmax,hmin,hmax,lmin,lmax
 //   alert|<t|h|l>,<high|low>,<1|0>
@@ -20,14 +20,26 @@
 //   identify|
 //
 // ARQUITETURA (FreeRTOS):
-//   loop()           -> Wi-Fi, MQTT, sensores, botao, telemetria
-//   tarefaAtuadores  -> LED + buzzer (tick de 2 ms, nunca bloqueia)
+//   loop()           -> Wi-Fi, MQTT, sensores, telemetria
+//   tarefaAtuadores  -> botao + LED + buzzer (tick de 2 ms, nunca bloqueia)
 //   tarefaOled       -> tela (acompanha varAtual/emPausa)
-// Assim o alarme continua igual mesmo se Wi-Fi/MQTT cairem.
+// Assim o alarme e o botao continuam iguais mesmo se Wi-Fi/MQTT cairem.
 //
-// ALERTA ALTO  (acima): LED FIXO na cor da variavel; buzzer toca o padrao.
-// ALERTA BAIXO (abaixo): LED PISCA na cor da variavel, junto com o
-//                        buzzer, em ritmo 2x mais lento.
+// COMO O ALERTA E COMUNICADO
+//   Qual variavel : cor do LED (vermelho = temperatura, azul = umidade, verde = luz)
+//                   e a tela do OLED.
+//   Qual sentido  : o SOM e o LED.
+//     ALTA  (acima) : LED FIXO; buzzer em tom CONTINUO (ou 1 bipe longo, ver ALTA_CONTINUO).
+//     BAIXA (abaixo): LED PISCA junto com o buzzer; 2 bipes e uma pausa.
+//   Com mais de um alerta, alterna entre as variaveis (com uma pausa de silencio).
+//
+// Historico:
+//   2.1  sinal do LDR corrigido (0 % = escuro, 100 % = muita luz);
+//        limites padrao alinhados ao preset "Guarda geral".
+//   2.2  botao de mute lido na tarefa dos atuadores.
+//   2.3  botao: descobre sozinho a polaridade do modulo, usa resistor interno
+//        quando precisa e confirma o aperto por ~20 ms (nao confunde ruido com aperto);
+//        buzzer simplificado: ALTA = tom continuo, BAIXA = 2 bipes.
 // ============================================================
 
 #include <WiFi.h>
@@ -43,7 +55,7 @@
 #endif
 #include "icones.h"   // icones 32x32 (termometro, gota, sol)
 
-#define FW_VERSION "2.0"
+#define FW_VERSION "2.3"
 
 // 1 = o Node avalia os limites sozinho, mesmo conectado (enquanto nao ha backend)
 // 0 = so obedece aos comandos "alert" do backend (avalia sozinho apenas se ficar offline)
@@ -62,18 +74,29 @@
 
 // ---------------- Ajustes de hardware ----------------
 #define DHTTYPE DHT22
-#define LDR_INVERTIDO 0          // 1 se "mais luz = numero menor" no seu modulo
-#ifndef BUZZER_ATIVO_EM_LOW
-#define BUZZER_ATIVO_EM_LOW 0    // 1 se o modulo apita com nivel baixo
+
+// LDR: 1 = "mais luz = numero MENOR" no sinal do modulo. E o caso do Wokwi e dos
+// modulos LDR comuns (a saida fica alta no escuro). O firmware inverte para que
+// 0 % = escuro e 100 % = muita luz.
+// Se o seu modulo fisico for o contrario (o valor SOBE ao cobrir o sensor com a mao),
+// coloque  #define LDR_INVERTIDO 0  no config.h.
+#ifndef LDR_INVERTIDO
+#define LDR_INVERTIDO 1
 #endif
 
-#if SIMULACAO_WOKWI
-  #define BOTAO_MODO        INPUT_PULLUP
-  #define BOTAO_PRESSIONADO LOW
-#else
-  #define BOTAO_MODO        INPUT
-  #define BOTAO_PRESSIONADO HIGH   // confirme no monitor serial com o seu modulo
+// Buzzer ativo de 3 pinos: muitos modulos apitam com nivel BAIXO.
+// Se o buzzer apitar direto em repouso, coloque  #define BUZZER_ATIVO_EM_LOW 1  no config.h.
+#ifndef BUZZER_ATIVO_EM_LOW
+#define BUZZER_ATIVO_EM_LOW 0
 #endif
+
+// Alerta ALTO: 1 = tom continuo (fixo); 0 = 1 bipe longo repetido (menos incomodo).
+#ifndef ALTA_CONTINUO
+#define ALTA_CONTINUO 1
+#endif
+
+// Botao: a polaridade e descoberta sozinha ao ligar (NAO aperte o botao nessa hora).
+// Para forcar, coloque no config.h:  #define BOTAO_PRESSIONADO HIGH  (ou LOW).
 
 #define OLED_LARGURA 128
 #define OLED_ALTURA  64
@@ -87,19 +110,18 @@ const char* UNIDADES[3]    = {"C", "%", "%"};
 const uint8_t DECIMAIS[3]  = {1, 0, 0};
 const uint8_t PIN_LED_VAR[3] = {PIN_LED_R, PIN_LED_B, PIN_LED_G};
 
-// Triggers: tmin, tmax, hmin, hmax, lmin, lmax (padrao = preset "Tinto")
-const float TRIG_PADRAO[6] = {12.0, 16.0, 60.0, 75.0, 0.0, 10.0};
+// Triggers: tmin, tmax, hmin, hmax, lmin, lmax
+// Padrao = preset "Guarda geral" do dashboard (usado ate o Node receber os limites do backend)
+const float TRIG_PADRAO[6] = {10.0, 15.0, 60.0, 75.0, 0.0, 10.0};
 const float HISTERESE[3]   = {0.5, 2.0, 2.0};   // folga para sair do alerta
 
 // Padroes de bipes (ms, alternando ligado/desligado, comecando ligado).
-// O ultimo item e a pausa entre repeticoes.
-// Acima  = padrao como definido abaixo (rapido).
-// Abaixo = bipes e intervalos 2x mais longos (lento); a pausa nao muda.
-const uint16_t PAD_TEMP[] = {700, 800};                 // 1 bipe longo
-const uint16_t PAD_UMID[] = {150, 150, 150, 800};       // 2 bipes curtos
-const uint16_t PAD_LUZ[]  = {80, 80, 80, 80, 80, 800};  // 3 bipes rapidos
-const uint16_t* const PADROES[3] = {PAD_TEMP, PAD_UMID, PAD_LUZ};
-const uint8_t TAM_PADRAO[3] = {2, 4, 6};
+// O ultimo item e a pausa entre repeticoes. Bipes abaixo de ~100 ms se misturam
+// no buzzer fisico, entao os tempos abaixo sao propositalmente generosos.
+const uint16_t PAD_ALTA[]  = {600, 600};                // so se ALTA_CONTINUO 0: 1 bipe longo
+const uint16_t PAD_BAIXA[] = {300, 250, 300, 1000};     // 2 bipes + pausa
+const uint8_t TAM_PAD_ALTA  = 2;
+const uint8_t TAM_PAD_BAIXA = 4;
 
 #define RODIZIO_MIN_MS    3000   // tempo minimo em cada variavel
 #define PAUSA_TROCA_MS     700   // silencio total (LED, buzzer e tela) ao trocar
@@ -119,12 +141,16 @@ volatile float temperatura = NAN, umidade = NAN;
 volatile int   luz = 0;
 volatile uint8_t alerta[3] = {0, 0, 0};   // 0 normal, 1 acima, 2 abaixo
 volatile bool suspenso = false, mudo = false;
+volatile bool mudoPendente = false;       // botao mudou o mudo: o loop() grava na memoria
 volatile bool emPausa = false;
 volatile int  varAtual = -1;
 volatile unsigned long identificaAte = 0;
 
 // espelhos do estado de rede, atualizados so no loop() e lidos pela tela
 volatile bool wifiOk = false, mqttOk = false, offlineLocal = false;
+
+// botao: true = em repouso o pino fica em HIGH (aperta = LOW); false = repouso LOW (aperta = HIGH)
+bool botaoRepousoAlto = false;
 
 float trig[6];
 unsigned long intervaloMs = 5000;
@@ -136,6 +162,8 @@ unsigned long tWifiTentativa = 0, tMqttTentativa = 0, tUltimoMqttOk = 0;
 unsigned long tRodizio = 0, tPad = 0, tPausa = 0;
 uint8_t padIdx = 0;
 int proxVar = -1;
+
+void tratarBotao();   // definida mais abaixo; usada pela tarefaAtuadores
 
 // ============================================================
 //  Memoria (NVS)
@@ -199,13 +227,6 @@ void iniciaPausa(int proxima) {
   buzzer(false);
 }
 
-// duracao de cada passo do padrao; "abaixo" deixa tudo 2x mais lento
-uint16_t duracaoPad(int v, uint8_t i) {
-  uint16_t d = PADROES[v][i];
-  if (alerta[v] == 2 && i < TAM_PADRAO[v] - 1) d *= 2;
-  return d;
-}
-
 void atualizaAtuadores() {
   if (suspenso) {
     ledsApagados();
@@ -262,24 +283,36 @@ void atualizaAtuadores() {
   }
 
   int v = varAtual;
-  bool bipe = (padIdx % 2 == 0);
   bool alta = (alerta[v] == 1);
+  bool continuo = alta && ALTA_CONTINUO;
+
+  const uint16_t* pad = alta ? PAD_ALTA : PAD_BAIXA;
+  uint8_t tam = alta ? TAM_PAD_ALTA : TAM_PAD_BAIXA;
+  if (padIdx >= tam) padIdx = 0;   // protege se o sentido mudou no meio do padrao
+
+  bool bipe = continuo ? true : (padIdx % 2 == 0);
 
   ledsApagados();
   if (alta) {
-    // ALTO: LED fixo na cor da variavel durante todo o tempo dela
+    // ALTA: LED fixo na cor da variavel durante todo o tempo dela
     digitalWrite(PIN_LED_VAR[v], HIGH);
   } else {
-    // BAIXO: LED pisca junto com o buzzer
+    // BAIXA: LED pisca junto com o buzzer
     if (bipe) digitalWrite(PIN_LED_VAR[v], HIGH);
   }
   buzzer(bipe && !mudo);   // mudo silencia so o buzzer
 
+  if (continuo) {
+    // tom continuo: so ha troca de variavel pelo tempo
+    if (n > 1 && millis() - tRodizio >= RODIZIO_MIN_MS) iniciaPausa(proximaVar(v));
+    return;
+  }
+
   // ritmo sem deriva: soma a duracao em vez de reler millis()
-  unsigned long dur = duracaoPad(v, padIdx);
+  unsigned long dur = pad[padIdx];
   if (millis() - tPad >= dur) {
     tPad += dur;
-    padIdx = (padIdx + 1) % TAM_PADRAO[v];
+    padIdx = (padIdx + 1) % tam;
     // terminou um ciclo completo: se ha outro alerta e o tempo minimo passou, troca
     if (padIdx == 0 && n > 1 && millis() - tRodizio >= RODIZIO_MIN_MS) {
       iniciaPausa(proximaVar(v));
@@ -289,6 +322,7 @@ void atualizaAtuadores() {
 
 void tarefaAtuadores(void*) {
   for (;;) {
+    tratarBotao();        // o botao fica aqui para nunca perder um aperto, mesmo com a rede travando o loop()
     atualizaAtuadores();
     vTaskDelay(pdMS_TO_TICKS(2));
   }
@@ -309,8 +343,8 @@ void leSensores() {
   long soma = 0;
   for (int i = 0; i < 8; i++) soma += analogRead(PIN_LDR);   // media reduz ruido
   int pct = map(soma / 8, 0, 4095, 0, 100);
-  if (LDR_INVERTIDO) pct = 100 - pct;
-  luz = constrain(pct, 0, 100);
+  if (LDR_INVERTIDO) pct = 100 - pct;   // modulo comum: escuro = valor alto, entao inverte
+  luz = constrain(pct, 0, 100);         // 0 % = escuro, 100 % = muita luz
 }
 
 // ============================================================
@@ -336,19 +370,80 @@ void avaliaLocal() {
 }
 
 // ============================================================
-//  Botao de mute (alterna, com debounce)
+//  Botao de mute
 // ============================================================
-void tratarBotao() {
-  static bool ultimo = false;
-  static unsigned long t = 0;
-  bool pressionado = (digitalRead(PIN_BOTAO) == BOTAO_PRESSIONADO);
-  if (pressionado && !ultimo && millis() - t > 250) {
-    mudo = !mudo;
-    prefs.putBool("mudo", mudo);
-    t = millis();
-    Serial.println(mudo ? "- Mute ligado (botao)" : "- Mute desligado (botao)");
+
+// Le o pino varias vezes e devolve quantas vezes leu HIGH (0 a 20).
+int contaAltos(uint8_t modo) {
+  pinMode(PIN_BOTAO, modo);
+  delay(20);
+  int altos = 0;
+  for (int i = 0; i < 20; i++) {
+    altos += digitalRead(PIN_BOTAO);
+    delay(1);
   }
-  ultimo = pressionado;
+  return altos;
+}
+
+// Descobre como o modulo do botao esta ligado, olhando o nivel em REPOUSO.
+// Modulos de 3 pinos variam: uns ficam em HIGH e vao a LOW ao apertar, outros o contrario.
+void detectaBotao() {
+#if SIMULACAO_WOKWI
+  pinMode(PIN_BOTAO, INPUT_PULLUP);
+  botaoRepousoAlto = true;
+  return;
+#elif defined(BOTAO_PRESSIONADO)
+  // polaridade forcada pelo config.h
+  botaoRepousoAlto = (BOTAO_PRESSIONADO == LOW);
+  pinMode(PIN_BOTAO, botaoRepousoAlto ? INPUT_PULLUP : INPUT_PULLDOWN);
+  Serial.println(botaoRepousoAlto ? "- Botao: polaridade forcada (aperta = LOW)" : "- Botao: polaridade forcada (aperta = HIGH)");
+  return;
+#else
+  int comPullUp   = contaAltos(INPUT_PULLUP);
+  int comPullDown = contaAltos(INPUT_PULLDOWN);
+  if (comPullUp >= 18 && comPullDown >= 18) {
+    // o proprio modulo puxa para HIGH em repouso: aperta = LOW
+    botaoRepousoAlto = true;
+    pinMode(PIN_BOTAO, INPUT);
+    Serial.println("- Botao: repouso HIGH, aperta = LOW");
+  } else if (comPullUp <= 2 && comPullDown <= 2) {
+    // o proprio modulo puxa para LOW em repouso: aperta = HIGH
+    botaoRepousoAlto = false;
+    pinMode(PIN_BOTAO, INPUT);
+    Serial.println("- Botao: repouso LOW, aperta = HIGH");
+  } else {
+    // o pino "flutua": o modulo nao tem resistor. Assume chave para GND, com resistor interno.
+    botaoRepousoAlto = true;
+    pinMode(PIN_BOTAO, INPUT_PULLUP);
+    Serial.println("- Botao: AVISO, sem resistor no modulo; assumindo aperta = LOW (confira a ligacao)");
+  }
+#endif
+}
+
+// Roda na tarefaAtuadores a cada 2 ms. So considera um aperto (ou solta) depois de
+// ~20 ms seguidos na mesma leitura, para ruido nao virar aperto.
+// Nao grava na memoria aqui (gravar na flash pode atrasar os bipes): avisa o loop() por "mudoPendente".
+void tratarBotao() {
+  static bool confirmado = false;          // true = botao pressionado (ja confirmado)
+  static uint8_t seguidas = 0;
+  static unsigned long tUltimoAperto = 0;
+
+  bool lidoPressionado = ((digitalRead(PIN_BOTAO) == HIGH) != botaoRepousoAlto);
+  if (lidoPressionado == confirmado) {
+    seguidas = 0;
+    return;
+  }
+  if (++seguidas < 10) return;             // 10 leituras seguidas (~20 ms) diferentes do confirmado
+  seguidas = 0;
+  confirmado = lidoPressionado;
+
+  Serial.println(confirmado ? "- Botao: pressionado" : "- Botao: solto");
+  if (confirmado && millis() - tUltimoAperto > 300) {
+    tUltimoAperto = millis();
+    mudo = !mudo;
+    mudoPendente = true;
+    Serial.println(mudo ? "- Mute LIGADO" : "- Mute desligado");
+  }
 }
 
 // ============================================================
@@ -644,13 +739,13 @@ void tarefaOled(void*) {
 }
 
 void splash() {
-  // 1) logo
+  // logo
   display.clearDisplay();
   display.drawBitmap((OLED_LARGURA - LOGO_W) / 2, 0, LOGO, LOGO_W, LOGO_H, SSD1306_WHITE);
   display.display();
   delay(1500);
 
-  // 2) boas-vindas (a setup() segura esta tela por mais 2 s)
+  // boas-vindas (a setup() segura esta tela por mais 2 s)
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
@@ -676,11 +771,11 @@ void setup() {
   pinMode(PIN_LED_G, OUTPUT);
   pinMode(PIN_LED_B, OUTPUT);
   pinMode(PIN_BUZZER, OUTPUT);
-  pinMode(PIN_BOTAO, BOTAO_MODO);
   ledsApagados();
 #if !SIMULACAO_WOKWI
-  digitalWrite(PIN_BUZZER, BUZZER_ATIVO_EM_LOW ? HIGH : LOW);
+  digitalWrite(PIN_BUZZER, BUZZER_ATIVO_EM_LOW ? HIGH : LOW);   // comeca em silencio
 #endif
+  detectaBotao();   // nao aperte o botao ao ligar o Node
 
   Wire.begin(PIN_SDA, PIN_SCL);
   Wire.setClock(400000);   // tela ~4x mais rapida
@@ -704,8 +799,8 @@ void setup() {
 
   delay(2000);   // so para mostrar o splash
 
-  // LED/buzzer e tela rodam por conta propria, independentes da rede
-  xTaskCreatePinnedToCore(tarefaAtuadores, "atuad", 4096, NULL, 2, NULL, 1);
+  // botao, LED/buzzer e tela rodam por conta propria, independentes da rede
+  xTaskCreatePinnedToCore(tarefaAtuadores, "atuad", 5120, NULL, 2, NULL, 1);
   xTaskCreatePinnedToCore(tarefaOled,      "oled",  4096, NULL, 1, NULL, 1);
 }
 
@@ -720,9 +815,14 @@ void loop() {
   mqttOk = mq;
   offlineLocal = !mq && (millis() - tUltimoMqttOk > 15000UL);
 
-  tratarBotao();
+  // grava o mudo na memoria (o botao so marca "pendente", para nao atrasar os bipes)
+  if (mudoPendente) {
+    mudoPendente = false;
+    prefs.putBool("mudo", mudo);
+  }
+
   leSensores();
   if ((AVALIACAO_LOCAL_SEMPRE || offlineLocal) && !suspenso) avaliaLocal();
   publicaTelemetria();
-  // atualizaAtuadores() e desenhaOled() rodam nas tarefas
+  // tratarBotao(), atualizaAtuadores() e desenhaOled() rodam nas tarefas
 }
