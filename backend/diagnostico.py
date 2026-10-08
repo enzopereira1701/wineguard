@@ -59,6 +59,18 @@ mostrar("Orion: versão (porta 1026)", s, c)
 s, c = pedir(f"http://{host}:1026/v2/entities/{entidade}?type=WineGuardNode&attrs=temperature,state&metadata=dateModified", cab)
 mostrar(f"Orion: entidade {entidade}", s, c)
 
+s, c = pedir(f"http://{host}:4041/iot/about", {})
+mostrar("IoT Agent (porta 4041)", s, c)
+
+s, c = pedir(f"http://{host}:4041/iot/devices", cab)
+mostrar("IoT Agent: dispositivos deste service/servicepath", s, c)
+
+s, c = pedir(f"http://{host}:1026/v2/entities?type=WineGuardNode&limit=1000&attrs=nome,adegaId", {**cab, "fiware-servicepath": "/#"})
+mostrar("Orion: entidades de TODAS as adegas (servicepath /#)", s, c)
+
+s, c = pedir(f"http://{host}:1026/v2/subscriptions?limit=100", cab)
+mostrar("Orion: assinaturas (confira se a condição tem TimeInstant)", s, c)
+
 fim = datetime.now(timezone.utc)
 ini = fim - timedelta(hours=1)
 fmt = lambda d: d.strftime("%Y-%m-%dT%H:%M:%S.000Z")

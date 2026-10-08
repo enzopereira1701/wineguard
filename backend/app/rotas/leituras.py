@@ -1,6 +1,7 @@
 """Rotas de leitura: valor atual e histórico (formato do docs/api-contrato.md)."""
 
 from datetime import datetime, timezone
+from typing import Optional
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -24,11 +25,14 @@ def _entidade(device_id: str) -> str:
 
 
 @router.get("/{device_id}/atual")
-async def valor_atual(device_id: str, cliente: httpx.AsyncClient = Depends(cliente_http)):
+async def valor_atual(device_id: str, vinheriaId: Optional[str] = None,
+                      cliente: httpx.AsyncClient = Depends(cliente_http)):
     """Última leitura de cada variável e o estado do dispositivo (vem do Orion)."""
     entidade = _entidade(device_id)
     try:
-        dados = await fiware.obter_entidade(cliente, entidade)
+        service = vinheriaId or config.FIWARE_SERVICE
+        servicepath = await fiware.resolver_servicepath(cliente, device_id, service)
+        dados = await fiware.obter_entidade(cliente, entidade, service, servicepath)
     except fiware.FiwareIndisponivel as exc:
         raise HTTPException(status_code=502, detail=f"FIWARE indisponível: {exc}")
     return dominio.montar_atual(device_id, dados, datetime.now(timezone.utc), config.OFFLINE_SEGUNDOS)
@@ -38,6 +42,7 @@ async def valor_atual(device_id: str, cliente: httpx.AsyncClient = Depends(clien
 async def historico(
     device_id: str,
     periodo: str = Query("1h", description="1h, 24h ou 7d"),
+    vinheriaId: Optional[str] = None,
     cliente: httpx.AsyncClient = Depends(cliente_http),
 ):
     """
@@ -50,7 +55,9 @@ async def historico(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     try:
-        respostas = await fiware.obter_historico(cliente, entidade, inicio, fim, agrupamento)
+        service = vinheriaId or config.FIWARE_SERVICE
+        servicepath = await fiware.resolver_servicepath(cliente, device_id, service)
+        respostas = await fiware.obter_historico(cliente, entidade, inicio, fim, agrupamento, service, servicepath)
     except fiware.FiwareIndisponivel as exc:
         raise HTTPException(status_code=502, detail=f"FIWARE indisponível: {exc}")
 

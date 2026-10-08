@@ -121,6 +121,23 @@ class TestAtual(unittest.TestCase):
         self.assertEqual((r["estado"], r["online"]), ("offline", False))
         self.assertEqual(r["temperature"], 13.4)  # mantém a última leitura conhecida
 
+    def test_leitura_parada_continua_online(self):
+        # valor igual há 5 min (dateModified velho), mas o TimeInstant mostra mensagem de 5 s atrás
+        instante = (AGORA - timedelta(seconds=5)).strftime("%Y-%m-%dT%H:%M:%S.00Z")
+        e = entidade(segundos_atras=300, TimeInstant={"type": "DateTime", "value": instante, "metadata": {}})
+        r = dominio.montar_atual("wgn001", e, AGORA)
+        self.assertEqual((r["estado"], r["online"]), ("ok", True))
+        self.assertEqual(r["ultimaLeitura"], "2026-10-07T12:00:25.000Z")
+
+    def test_timeinstant_velho_e_offline(self):
+        instante = (AGORA - timedelta(seconds=120)).strftime("%Y-%m-%dT%H:%M:%S.00Z")
+        e = entidade(segundos_atras=300, TimeInstant={"type": "DateTime", "value": instante, "metadata": {}})
+        self.assertFalse(dominio.montar_atual("wgn001", e, AGORA)["online"])
+
+    def test_timeinstant_invalido_usa_datemodified(self):
+        e = entidade(segundos_atras=5, TimeInstant={"type": "DateTime", "value": "lixo", "metadata": {}})
+        self.assertTrue(dominio.montar_atual("wgn001", e, AGORA)["online"])
+
     def test_limite_de_30_segundos(self):
         self.assertEqual(dominio.montar_atual("wgn001", entidade(segundos_atras=30), AGORA)["estado"], "ok")
 

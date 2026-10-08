@@ -5,6 +5,7 @@ Ponte entre o dashboard (React) e o FIWARE:
   - lê o último valor no Orion (porta 1026)
   - lê o histórico no STH-Comet (porta 8666)
   - envia comandos ao Node pelo Orion
+  - cadastra dispositivos no IoT Agent (porta 4041) e resume o estado da vinheria
 
 Rodar (na pasta backend, com o ambiente virtual ativo):
     uvicorn app.main:app --reload
@@ -15,9 +16,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import config
-from .rotas import comandos, leituras
+from .rotas import comandos, dispositivos, leituras
 
-app = FastAPI(title="WineGuard Cloud", version="0.2.0")
+app = FastAPI(title="WineGuard Cloud", version="0.3.0")
 
 # CORS: deixa o dashboard (React) chamar esta API a partir do navegador
 app.add_middleware(
@@ -29,6 +30,7 @@ app.add_middleware(
 
 app.include_router(leituras.router)
 app.include_router(comandos.router)
+app.include_router(dispositivos.router)
 
 
 @app.get("/saude", tags=["geral"])
