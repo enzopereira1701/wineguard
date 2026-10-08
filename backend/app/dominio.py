@@ -326,11 +326,11 @@ def montar_dispositivo(vinheria_id: str, entidade: dict, servicepath_padrao: str
 def montar_resumo_item(atual: dict) -> dict:
     """
     Item de GET /vinherias/{id}/resumo a partir do resultado de montar_atual.
-    alertasAtivos é provisório (1 se está em alerta); o Backend 3 passa a contar os alertas de verdade.
+    alertasAtivos começa em 0; cadastro.resumo o substitui pela contagem real de alertas em andamento.
     """
     return {
         "deviceId": atual["deviceId"],
         "estado": atual["estado"],
         "ultimaLeitura": atual["ultimaLeitura"],
-        "alertasAtivos": 1 if atual["estado"] == "alerta" else 0,
+        "alertasAtivos": 0,
     }

@@ -35,3 +35,17 @@ def apikey_da_vinheria(vinheria_id: str):
     Por enquanto só a vinheria padrão é conhecida; o cadastro de vinherias chega no Backend 4.
     """
     return APIKEY if vinheria_id == FIWARE_SERVICE else None
+
+# --- Triggers e alertas (Backend 3)
+# Liga o vigia: o loop que avalia os triggers a cada INTERVALO_VIGIA segundos (0 = desligado)
+VIGIA_ATIVO = os.getenv("VIGIA_ATIVO", "1") not in ("0", "false", "False", "")
+INTERVALO_VIGIA = max(2, int(os.getenv("INTERVALO_VIGIA", "5")))
+# Quanto o PUT /triggers espera o Node confirmar (cmdexe) antes de desistir
+ESPERA_COMANDO_SEGUNDOS = float(os.getenv("ESPERA_COMANDO_SEGUNDOS", "8"))
+# Segundos sem o estado do Node bater com o esperado, antes de reenviar os alertas
+RECONCILIAR_SEGUNDOS = int(os.getenv("RECONCILIAR_SEGUNDOS", "15"))
+
+
+def vinherias_conhecidas() -> list:
+    """Vinherias que o vigia acompanha. Por enquanto só a padrão; o Backend 4 traz o cadastro."""
+    return [FIWARE_SERVICE]

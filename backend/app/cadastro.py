@@ -11,7 +11,7 @@ Se o passo 4 falhar, o passo 3 é desfeito (não sobra dispositivo pela metade).
 
 from datetime import datetime
 
-from . import config, dominio, fiware
+from . import alertas, config, dominio, fiware, gatilhos
 
 
 class VinheriaDesconhecida(Exception):
@@ -29,7 +29,7 @@ def _apikey(vinheria_id: str) -> str:
     return apikey
 
 
-def _so_dispositivos(entidades):
+def so_dispositivos(entidades):
     """Descarta o que não é WineGuardNode:NNN (ex.: entidade-fantasma do IoT Agent), em ordem de id."""
     itens = [(dominio.device_id_da_entidade(e.get("id")), e) for e in entidades]
     return sorted(((d, e) for d, e in itens if d), key=lambda par: par[0])
@@ -38,17 +38,20 @@ def _so_dispositivos(entidades):
 async def listar(cliente, vinheria_id: str) -> list:
     _apikey(vinheria_id)
     entidades = await fiware.listar_entidades(cliente, vinheria_id)
-    return [dominio.montar_dispositivo(vinheria_id, e, config.FIWARE_SERVICEPATH) for _, e in _so_dispositivos(entidades)]
+    return [dominio.montar_dispositivo(vinheria_id, e, config.FIWARE_SERVICEPATH) for _, e in so_dispositivos(entidades)]
 
 
 async def resumo(cliente, vinheria_id: str, agora: datetime) -> list:
     """Estado de todos os dispositivos da vinheria numa chamada só."""
     _apikey(vinheria_id)
     entidades = await fiware.listar_entidades(cliente, vinheria_id)
-    return [
-        dominio.montar_resumo_item(dominio.montar_atual(d, e, agora, config.OFFLINE_SEGUNDOS))
-        for d, e in _so_dispositivos(entidades)
-    ]
+    ativos = gatilhos.contar_ativos(await alertas.listar(cliente, vinheria_id, "ativos"))
+    itens = []
+    for d, e in so_dispositivos(entidades):
+        item = dominio.montar_resumo_item(dominio.montar_atual(d, e, agora, config.OFFLINE_SEGUNDOS))
+        item["alertasAtivos"] = ativos.get(d, 0)
+        itens.append(item)
+    return itens
 
 
 async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> dict:
@@ -76,7 +79,7 @@ async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> 
 
     # --- device_id novo e registro COM apikey
     todas = await fiware.listar_entidades(cliente, vinheria_id)
-    minimo = dominio.proximo_numero(d for d, _ in _so_dispositivos(todas))
+    minimo = dominio.proximo_numero(d for d, _ in so_dispositivos(todas))
     device_id = None
     for _ in range(5):
         numero = await fiware.reservar_numero(cliente, minimo)

@@ -1,6 +1,6 @@
 # WineGuard Cloud (backend)
 
-API em FastAPI que liga o dashboard ao FIWARE. **Etapa atual: Backend 2** (cadastro de dispositivos no IoT Agent com apikey, resumo da vinheria e comandos), sobre o Backend 1 (leitura atual e histórico).
+API em FastAPI que liga o dashboard ao FIWARE. **Etapa atual: Backend 3** (triggers, alertas e o vigia que avalia tudo a cada 5 s), sobre o Backend 2 (cadastro de dispositivos no IoT Agent com apikey e resumo) e o Backend 1 (leitura atual, histórico e comandos).
 
 ## Rodar
 
@@ -28,7 +28,10 @@ Documentação interativa: <http://127.0.0.1:8000/docs>. Para ativar o ambiente 
 | `POST /api/vinherias/{id}/dispositivos` | Cadastra: registra no IoT Agent **com apikey** e devolve `{dispositivo, config:{deviceId, apikey, ...}}`. Informe `adegaId` **ou** `novaAdega` |
 | `PATCH /api/dispositivos/{id}` | Renomeia (`nome`). Trocar de adega ainda não é suportado (400) |
 | `DELETE /api/dispositivos/{id}` | Manda `suspend`, remove do IoT Agent e do Orion |
-| `GET /api/vinherias/{id}/resumo` | Estado de cada dispositivo numa chamada só |
+| `GET /api/vinherias/{id}/resumo` | Estado de cada dispositivo numa chamada só (`alertasAtivos` é a contagem real) |
+| `GET /api/dispositivos/{id}/triggers` | Triggers em vigor (se nunca definidos, os do preset do dispositivo) |
+| `PUT /api/dispositivos/{id}/triggers` | Valida, salva, manda `setTriggers` ao Node e responde `{recebido, deviceId, em}` quando ele confirma. Sem confirmação: 504 (os limites ficam salvos e são reenviados quando o Node voltar) |
+| `GET /api/vinherias/{id}/alertas?estado=todos\|ativos\|encerrados&deviceId=` | Histórico de alertas, do mais novo para o mais antigo (`fim: null` = em andamento) |
 
 As rotas por dispositivo aceitam `?vinheriaId=` (padrão: `FIWARE_SERVICE`). A adega do dispositivo é descoberta pelo atributo `adegaId` gravado na entidade do Orion.
 
@@ -39,7 +42,20 @@ Vinheria = `fiware-service`; adega = `fiware-servicepath`. Cadastrar um disposit
 - O contador de ids é **global** (entidade `Contador` no service `wineguard_admin`) e só cresce: um id apagado nunca volta, porque o MQTT identifica o Node só por `apikey` + `device_id`.
 - A assinatura do STH agora leva `TimeInstant` na condição, para o histórico gravar a cada leitura (assinaturas antigas são atualizadas no próximo cadastro).
 - Rode a API em **um processo só** (o contador usa uma trava em memória).
-- `alertasAtivos` do resumo é provisório (1 se o estado é `alerta`); o Backend 3 conta os alertas de verdade.
+
+### Triggers, alertas e o vigia (Backend 3)
+
+- **Triggers** ficam no atributo `triggers` da entidade do dispositivo no Orion (sem banco de dados). O `PUT` valida (mínimo < máximo, dentro do que o sensor mede), salva e envia `setTriggers|tmin,tmax,hmin,hmax,lmin,lmax`. A confirmação vem do `setTriggers_status` que o IoT Agent grava quando o Node responde no `cmdexe`.
+- **O vigia** roda em segundo plano junto com a API e, a cada 5 s, lê o Orion e avalia cada dispositivo. O Node só obedece:
+  - saiu da faixa: abre um alerta e manda `alert|t,high,1` (ou `low`; `h` umidade, `l` luz);
+  - voltou com histerese (0,5 °C na temperatura; 2 % na umidade e na luz): encerra e manda `alert|...,0`;
+  - 30 s sem leitura: alerta `offline`, com começo e fim;
+  - suspenso: encerra os alertas do dispositivo;
+  - Node que volta, ou API que reinicia: reenvia os triggers e os alertas em andamento;
+  - o `state` do Node diverge do esperado por mais de 15 s: reenvia os alertas (reconciliação).
+- **Alertas** são entidades `Alerta` no Orion (service da vinheria, servicepath `/`), com id de um contador global. Em andamento = sem o atributo `fim`. Reiniciar a API não perde nem duplica alertas: o vigia relê os que estão em andamento.
+- Variáveis de ambiente: `VIGIA_ATIVO` (`0` desliga o vigia), `INTERVALO_VIGIA` (segundos, padrão 5), `ESPERA_COMANDO_SEGUNDOS` (padrão 8), `RECONCILIAR_SEGUNDOS` (padrão 15).
+- O alerta de **estabilidade** (variação > 2 °C em 24 h) fica para o Backend 4.
 
 O formato das respostas está em `docs/api-contrato.md` (na raiz do repositório).
 
@@ -53,8 +69,12 @@ backend/
 │  ├─ dominio.py       regras puras (ids, adegas, janelas de tempo, médias, estado, corpos do FIWARE). Sem rede
 │  ├─ fiware.py        chamadas ao Orion, STH-Comet e IoT Agent
 │  ├─ cadastro.py      fluxo de cadastro, listagem, resumo, renomear e remover
-│  └─ rotas/           leituras.py, comandos.py e dispositivos.py (as rotas)
-├─ tests/              regras de dominio.py e o cadastro completo contra um FIWARE falso
+│  ├─ gatilhos.py      regras puras de triggers e alertas (presets, validação, histerese, comandos). Sem rede
+│  ├─ alertas.py       alertas guardados no Orion
+│  ├─ triggers.py      ler, salvar e enviar triggers ao Node (espera a confirmação)
+│  ├─ vigia.py         o loop de 5 s que avalia os triggers e comanda o Node
+│  └─ rotas/           leituras, comandos, dispositivos, triggers e alertas (as rotas)
+├─ tests/              regras puras, cadastro, triggers e vigia contra um FIWARE falso (tests/fake_fiware.py)
 ├─ diagnostico.py      mostra as respostas cruas do FIWARE (sem instalar nada)
 ├─ requirements.txt    bibliotecas
 └─ .env.example        modelo do .env

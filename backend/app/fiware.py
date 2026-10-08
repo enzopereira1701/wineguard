@@ -122,15 +122,18 @@ def esquecer_servicepath(service: str, device_id: str):
     _cache_servicepath.pop((service, device_id), None)
 
 
-ATRIBUTOS_LISTAGEM = ("nome,preset,adegaId,adegaNome,criadoEm,"
+ATRIBUTOS_LISTAGEM = ("nome,preset,adegaId,adegaNome,criadoEm,triggers,"
                       "temperature,humidity,luminosity,state,muted,rssi,firmware,TimeInstant")
 
 
-async def listar_entidades(cliente, service: str, servicepath: str = "/#", entidade_id=None):
+async def listar_entidades(cliente, service: str, servicepath: str = "/#", entidade_id=None,
+                           tipo=None, attrs=None):
     """
-    Entidades WineGuardNode da vinheria. Com servicepath '/#' o Orion devolve as de TODAS as adegas.
+    Entidades da vinheria (por padrão as WineGuardNode). Com servicepath '/#' o Orion devolve as de
+    TODAS as adegas.
     """
-    params = {"type": config.TIPO_ENTIDADE, "limit": 1000, "attrs": ATRIBUTOS_LISTAGEM, "metadata": "dateModified"}
+    params = {"type": tipo or config.TIPO_ENTIDADE, "limit": 1000, "attrs": attrs or ATRIBUTOS_LISTAGEM,
+              "metadata": "dateModified"}
     if entidade_id:
         params["id"] = entidade_id
     r = await _pedir(cliente, "GET", f"{config.ORION_URL}/v2/entities", "Orion", service, servicepath,
@@ -230,22 +233,43 @@ async def garantir_assinatura_sth(cliente, service: str, servicepath: str) -> st
     return "ok"
 
 
-async def gravar_metadados(cliente, service: str, servicepath: str, entidade: str, atributos: dict):
-    """Grava/atualiza atributos (nome, preset, adega...) na entidade; cria a entidade se ainda não existe."""
+async def gravar_metadados(cliente, service: str, servicepath: str, entidade: str, atributos: dict,
+                           tipo=None, criar: bool = True):
+    """
+    Grava/atualiza atributos (nome, preset, triggers, adega...) na entidade. Se a entidade ainda não
+    existe, cria (criar=True) ou não faz nada (criar=False).
+    """
+    tipo = tipo or config.TIPO_ENTIDADE
     r = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities/{entidade}/attrs", "Orion",
-                     service, servicepath, params={"type": config.TIPO_ENTIDADE}, json=atributos)
+                     service, servicepath, params={"type": tipo}, json=atributos)
     if r.status_code == 404:
-        r = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities", "Orion", service, servicepath,
-                         json={"id": entidade, "type": config.TIPO_ENTIDADE, **atributos})
-        if r.status_code != 201:
-            raise _erro("Orion", r)
+        if not criar:
+            return
+        await criar_entidade(cliente, service, servicepath, entidade, tipo, atributos)
         return
     if r.status_code not in (200, 204):
         raise _erro("Orion", r)
 
 
+async def criar_entidade(cliente, service: str, servicepath: str, entidade: str, tipo: str, atributos: dict):
+    r = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities", "Orion", service, servicepath,
+                     json={"id": entidade, "type": tipo, **atributos})
+    if r.status_code != 201:
+        raise _erro("Orion", r)
+
+
+async def obter_atributos(cliente, entidade: str, atributos: str, service=None, servicepath=None):
+    """Só os atributos pedidos (com dateModified). None se a entidade não existe."""
+    r = await _pedir(cliente, "GET", f"{config.ORION_URL}/v2/entities/{entidade}", "Orion", service, servicepath,
+                     params={"type": config.TIPO_ENTIDADE, "attrs": atributos, "metadata": "dateModified"})
+    if r.status_code == 404:
+        return None
+    if r.status_code != 200:
+        raise _erro("Orion", r)
+    return r.json()
+
+
 # ----------------------------------------------------- contador de ids
-_CONTADOR = "urn:ngsi-ld:Contador:dispositivos"
 _travas = weakref.WeakKeyDictionary()
 
 
@@ -254,18 +278,20 @@ def _trava() -> asyncio.Lock:
     return _travas.setdefault(asyncio.get_running_loop(), asyncio.Lock())
 
 
-async def reservar_numero(cliente, minimo: int = 1) -> int:
+async def reservar_numero(cliente, minimo: int = 1, nome: str = "dispositivos") -> int:
     """
     Reserva o próximo número de dispositivo (wgn002 -> 2). O contador é global e só cresce, então
     um id apagado nunca é reaproveitado (o Node físico apagado não "ressuscita" em outro cadastro).
+    'nome' escolhe o contador: 'dispositivos' (wgn###) ou 'alertas' (id dos alertas).
     O device_id precisa ser único no sistema todo: o MQTT identifica o Node só por apikey + device_id.
     """
+    contador = f"urn:ngsi-ld:Contador:{nome}"
     async with _trava():
-        r = await _pedir(cliente, "GET", f"{config.ORION_URL}/v2/entities/{_CONTADOR}", "Orion",
+        r = await _pedir(cliente, "GET", f"{config.ORION_URL}/v2/entities/{contador}", "Orion",
                          config.ADMIN_SERVICE, "/", params={"type": "Contador", "attrs": "proximo"})
         if r.status_code == 200:
             numero = max(int(r.json()["proximo"]["value"]), minimo)
-            gravado = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities/{_CONTADOR}/attrs", "Orion",
+            gravado = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities/{contador}/attrs", "Orion",
                                    config.ADMIN_SERVICE, "/", params={"type": "Contador"},
                                    json={"proximo": {"type": "Integer", "value": numero + 1}})
             if gravado.status_code not in (200, 204):
@@ -274,7 +300,7 @@ async def reservar_numero(cliente, minimo: int = 1) -> int:
             numero = minimo
             gravado = await _pedir(cliente, "POST", f"{config.ORION_URL}/v2/entities", "Orion",
                                    config.ADMIN_SERVICE, "/",
-                                   json={"id": _CONTADOR, "type": "Contador",
+                                   json={"id": contador, "type": "Contador",
                                          "proximo": {"type": "Integer", "value": numero + 1}})
             if gravado.status_code != 201:
                 raise _erro("Orion", gravado)

@@ -71,6 +71,12 @@ mostrar("Orion: entidades de TODAS as adegas (servicepath /#)", s, c)
 s, c = pedir(f"http://{host}:1026/v2/subscriptions?limit=100", cab)
 mostrar("Orion: assinaturas (confira se a condição tem TimeInstant)", s, c)
 
+s, c = pedir(f"http://{host}:1026/v2/entities?type=Alerta&limit=20&attrs=deviceId,variavel,sentido,valor,limite,inicio,fim", {**cab, "fiware-servicepath": "/"})
+mostrar("Orion: alertas guardados (service da vinheria, servicepath /)", s, c)
+
+s, c = pedir(f"http://{host}:1026/v2/entities/{entidade}?type=WineGuardNode&attrs=triggers,preset,setTriggers_status,setTriggers_info&metadata=dateModified", cab)
+mostrar(f"Orion: triggers e confirmação do setTriggers de {device}", s, c)
+
 fim = datetime.now(timezone.utc)
 ini = fim - timedelta(hours=1)
 fmt = lambda d: d.strftime("%Y-%m-%dT%H:%M:%S.000Z")
