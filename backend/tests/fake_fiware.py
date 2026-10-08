@@ -54,6 +54,8 @@ class FakeCliente:
         self.falhar_comandos = False
         self.responder = "ok"    # como o Node responde aos comandos: ok | erro | pendente | nada
         self.comandos_valores = []   # (entidade, comando, valor)
+        self.sth = {"min": [], "max": []}   # extremos horários da temperatura que o STH devolve
+        self.sth_chamadas = []              # (variavel, metodo)
         self._seq = 0
         self._relogio = datetime(2026, 10, 8, 9, 0, 0, tzinfo=timezone.utc)
 
@@ -69,6 +71,8 @@ class FakeCliente:
             return self._orion(metodo, u.path, params or {}, json, service, sp)
         if u.port == 4041:
             return self._iota(metodo, u.path, json, service, sp)
+        if u.port == 8666:
+            return self._sth(u.path, params or {})
         raise AssertionError(f"porta inesperada: {url}")
 
     # ---- Orion
@@ -117,6 +121,13 @@ class FakeCliente:
                                 "type": "commandStatus", "value": situacao,
                                 "metadata": {"dateModified": {"type": "DateTime", "value": self._carimbo()}}}
                     return Resp(204)
+            elif "/attrs/" in resto:
+                ident, atributo = resto.split("/attrs/", 1)
+                entidade = self.entidades.get((service, sp, ident))
+                if m == "DELETE" and entidade is not None and atributo in entidade:
+                    del entidade[atributo]
+                    return Resp(204)
+                return Resp(404, {"error": "NotFound"})
             else:
                 chave = (service, sp, resto)
                 if m == "GET":
@@ -141,6 +152,21 @@ class FakeCliente:
                     return Resp(204)
             return Resp(404)
         raise AssertionError(f"Orion: rota não simulada {m} {caminho}")
+
+    # ---- STH-Comet
+    def _sth(self, caminho, params):
+        variavel, metodo = caminho.rsplit("/", 1)[1], params["aggrMethod"]
+        self.sth_chamadas.append((variavel, metodo))
+        valores = self.sth.get(metodo, []) if variavel == "temperature" else []
+        fim = datetime.strptime(params["dateTo"], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone.utc)
+        origem = fim.replace(hour=0, minute=0, second=0, microsecond=0)
+        blocos = []
+        if valores:
+            blocos = [{"_id": {"origin": dominio.para_iso(origem), "resolution": "hour"},
+                       "points": [{"offset": i, "samples": 1, metodo: v} for i, v in enumerate(valores)]}]
+        return Resp(200, {"contextResponses": [{
+            "contextElement": {"attributes": [{"name": variavel, "values": blocos}]},
+            "statusCode": {"code": "200"}}]})
 
     # ---- IoT Agent
     def _iota(self, m, caminho, corpo, service, sp):

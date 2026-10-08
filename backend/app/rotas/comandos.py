@@ -1,4 +1,4 @@
-"""Envio de comandos ao Node (mute, identify, ...). Vem do rascunho anterior; triggers e alertas entram no Backend 3."""
+"""Envio de comandos ao Node (mute, identify, ...)."""
 
 from typing import Optional
 
@@ -6,13 +6,14 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from .. import config, dominio, fiware
+from .. import config, dominio, fiware, vinherias
 from .leituras import cliente_http
+from .util import executar
 
 router = APIRouter(prefix="/api/dispositivos", tags=["comandos"])
 
 # Comandos que o Node aceita (ver o firmware: executaComando)
-COMANDOS = {"setTriggers", "alert", "mute", "suspend", "resume", "setInterval", "identify"}
+COMANDOS = set(dominio.COMANDOS_DO_NODE)
 
 
 class Comando(BaseModel):
@@ -26,14 +27,12 @@ async def enviar_comando(device_id: str, corpo: Comando, vinheriaId: Optional[st
     """Manda um comando ao Node pelo caminho API -> Orion -> IoT Agent -> MQTT -> ESP32."""
     if corpo.comando not in COMANDOS:
         raise HTTPException(status_code=400, detail=f"comando inválido. Use: {sorted(COMANDOS)}")
-    try:
+
+    async def enviar():
         entidade = dominio.entidade_do_dispositivo(device_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    try:
         service = vinheriaId or config.FIWARE_SERVICE
+        await vinherias.exigir(cliente, service)
         servicepath = await fiware.resolver_servicepath(cliente, device_id, service)
         await fiware.enviar_comando(cliente, entidade, corpo.comando, corpo.valor, service, servicepath)
-    except fiware.FiwareIndisponivel as exc:
-        raise HTTPException(status_code=502, detail=f"FIWARE indisponível: {exc}")
-    return {"enviado": True}
+        return {"enviado": True}
+    return await executar(enviar())

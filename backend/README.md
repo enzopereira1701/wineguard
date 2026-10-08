@@ -55,7 +55,23 @@ Vinheria = `fiware-service`; adega = `fiware-servicepath`. Cadastrar um disposit
   - o `state` do Node diverge do esperado por mais de 15 s: reenvia os alertas (reconciliação).
 - **Alertas** são entidades `Alerta` no Orion (service da vinheria, servicepath `/`), com id de um contador global. Em andamento = sem o atributo `fim`. Reiniciar a API não perde nem duplica alertas: o vigia relê os que estão em andamento.
 - Variáveis de ambiente: `VIGIA_ATIVO` (`0` desliga o vigia), `INTERVALO_VIGIA` (segundos, padrão 5), `ESPERA_COMANDO_SEGUNDOS` (padrão 8), `RECONCILIAR_SEGUNDOS` (padrão 15).
-- O alerta de **estabilidade** (variação > 2 °C em 24 h) fica para o Backend 4.
+- O alerta de **estabilidade** (variação > 2 °C em 24 h) é avaliado pelo vigia a cada `ESTABILIDADE_INTERVALO` s (padrão 60), com o mínimo e o máximo das últimas 24 h do STH-Comet. O limite é o `estabilidadeMax` dos triggers.
+
+### Vinherias, adegas, suspensão e estabilidade (Backend 4)
+
+| Rota | O que faz |
+|---|---|
+| `GET /api/vinherias` | Lista as vinherias (com `apikey`, `status`, `vencimento`, contagens) |
+| `POST /api/vinherias` | `{nome, vencimento?}` cria a vinheria (id `vin_<nome>`, apikey própria, "Adega 1") |
+| `GET /api/vinherias/{id}/adegas` | Adegas da vinheria |
+| `POST /api/vinherias/{id}/suspender` | Manda `suspend` a todos os Nodes e passa a recusar consultas (403) |
+| `POST /api/vinherias/{id}/reativar` | Manda `resume`; se o vencimento passou, renova por 30 dias |
+| `POST /api/vinherias/{id}/simular-inadimplencia` | Vence o vencimento (ontem) e suspende (para a demonstração) |
+| `GET /api/dispositivos/{id}/estabilidade` | `{deviceId, min, max, variacao, instavel, limite}` das últimas 24 h |
+
+- Vinheria e adega são entidades no Orion (service `wineguard_admin` e na própria vinheria). A vinheria padrão (`vin_demo`, apikey `winedemo`) nasce sozinha.
+- Vinheria suspensa (ou com vencimento vencido, suspensa sozinha): a API responde **403**; o vigia encerra os alertas e reenvia `suspend` a quem ainda publicar.
+- Variáveis: `VENCIMENTO_PADRAO_DIAS` (90) e `ESTABILIDADE_INTERVALO` (60).
 
 O formato das respostas está em `docs/api-contrato.md` (na raiz do repositório).
 

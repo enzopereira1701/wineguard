@@ -69,13 +69,13 @@ async def obter_entidade(cliente, entidade: str, service=None, servicepath=None)
 
 
 async def _historico_variavel(cliente, entidade, variavel, inicio: datetime, fim: datetime, agrupamento: str,
-                              service=None, servicepath=None):
+                              service=None, servicepath=None, metodo: str = "sum"):
     r = await _pedir(
         cliente, "GET",
         f"{config.STH_URL}/STH/v1/contextEntities/type/{config.TIPO_ENTIDADE}/id/{entidade}/attributes/{variavel}",
         "STH-Comet", service, servicepath,
         params={
-            "aggrMethod": "sum",          # com 'samples' dá a média: sum / samples
+            "aggrMethod": metodo,         # 'sum' (com 'samples' dá a média), 'min' ou 'max'
             "aggrPeriod": agrupamento,
             "dateFrom": para_iso(inicio),
             "dateTo": para_iso(fim),
@@ -96,6 +96,14 @@ async def obter_historico(cliente, entidade: str, inicio: datetime, fim: datetim
           for v in VARIAVEIS]
     )
     return dict(zip(VARIAVEIS, respostas))
+
+
+async def obter_extremos(cliente, entidade: str, inicio: datetime, fim: datetime, service=None, servicepath=None):
+    """Mínimos e máximos da temperatura por hora, no período (para a estabilidade). Devolve (resp_min, resp_max)."""
+    return tuple(await asyncio.gather(*[
+        _historico_variavel(cliente, entidade, "temperature", inicio, fim, "hour", service, servicepath, metodo)
+        for metodo in ("min", "max")
+    ]))
 
 
 async def enviar_comando(cliente, entidade: str, comando: str, valor: str, service=None, servicepath=None):
@@ -258,10 +266,18 @@ async def criar_entidade(cliente, service: str, servicepath: str, entidade: str,
         raise _erro("Orion", r)
 
 
-async def obter_atributos(cliente, entidade: str, atributos: str, service=None, servicepath=None):
+async def apagar_atributo(cliente, service: str, servicepath: str, entidade: str, atributo: str, tipo=None):
+    """Remove um atributo da entidade (se ele não existe, não faz nada)."""
+    r = await _pedir(cliente, "DELETE", f"{config.ORION_URL}/v2/entities/{entidade}/attrs/{atributo}", "Orion",
+                     service, servicepath, params={"type": tipo or config.TIPO_ENTIDADE})
+    if r.status_code not in (200, 204, 404):
+        raise _erro("Orion", r)
+
+
+async def obter_atributos(cliente, entidade: str, atributos: str, service=None, servicepath=None, tipo=None):
     """Só os atributos pedidos (com dateModified). None se a entidade não existe."""
     r = await _pedir(cliente, "GET", f"{config.ORION_URL}/v2/entities/{entidade}", "Orion", service, servicepath,
-                     params={"type": config.TIPO_ENTIDADE, "attrs": atributos, "metadata": "dateModified"})
+                     params={"type": tipo or config.TIPO_ENTIDADE, "attrs": atributos, "metadata": "dateModified"})
     if r.status_code == 404:
         return None
     if r.status_code != 200:

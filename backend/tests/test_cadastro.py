@@ -265,7 +265,8 @@ class TestAtualizarERemover(CasoComFiware):
 
     async def test_remover_wgn001_apaga_tambem_a_entidade_fantasma(self):
         await cadastro.remover(self.fake, VIN, "wgn001")
-        self.assertEqual(self.fake.entidades, {})
+        nos = {k for k, v in self.fake.entidades.items() if v["type"] == "WineGuardNode"}
+        self.assertEqual(nos, set())
 
     async def test_remover_em_adega_nova(self):
         await self.cadastrar(adegaId=None, novaAdega="Porão Sul")

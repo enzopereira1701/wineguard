@@ -3,12 +3,18 @@
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 
-from .. import alertas, cadastro, fiware
+from .. import alertas, vinherias
 from .leituras import cliente_http
+from .util import executar
 
 router = APIRouter(tags=["alertas"])
+
+
+async def _listar(cliente, vinheria_id, estado, device_id):
+    await vinherias.exigir(cliente, vinheria_id)
+    return await alertas.listar(cliente, vinheria_id, estado, device_id)
 
 
 @router.get("/api/vinherias/{vinheria_id}/alertas")
@@ -19,12 +25,4 @@ async def listar(
     cliente: httpx.AsyncClient = Depends(cliente_http),
 ):
     """Alertas do mais novo para o mais antigo. 'fim' vazio = em andamento."""
-    try:
-        cadastro._apikey(vinheria_id)
-        return await alertas.listar(cliente, vinheria_id, estado, deviceId)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except cadastro.VinheriaDesconhecida:
-        raise HTTPException(status_code=404, detail="vinheria não encontrada")
-    except fiware.FiwareIndisponivel as exc:
-        raise HTTPException(status_code=502, detail=f"FIWARE indisponível: {exc}")
+    return await executar(_listar(cliente, vinheria_id, estado, deviceId))

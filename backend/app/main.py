@@ -6,6 +6,7 @@ Ponte entre o dashboard (React) e o FIWARE:
   - lê o histórico no STH-Comet (porta 8666)
   - envia comandos ao Node pelo Orion
   - cadastra dispositivos no IoT Agent (porta 4041) e resume o estado da vinheria
+  - cria vinherias e adegas, suspende por inadimplência e reativa
   - guarda os triggers de cada dispositivo e os envia ao Node
   - vigia: a cada 5 s avalia os triggers, abre/encerra alertas e comanda o Node
 
@@ -22,11 +23,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import config, vigia
-from .rotas import alertas, comandos, dispositivos, leituras, triggers
+from .rotas import alertas, comandos, dispositivos, leituras, triggers, vinherias
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s", datefmt="%H:%M:%S")
-
-logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)  # sem uma linha por pedido a cada 5 s
 
 
 @asynccontextmanager
@@ -40,7 +40,7 @@ async def ciclo_de_vida(app: FastAPI):
             tarefa.cancel()
 
 
-app = FastAPI(title="WineGuard Cloud", version="0.4.0", lifespan=ciclo_de_vida)
+app = FastAPI(title="WineGuard Cloud", version="0.5.0", lifespan=ciclo_de_vida)
 
 # CORS: deixa o dashboard (React) chamar esta API a partir do navegador
 app.add_middleware(
@@ -55,6 +55,7 @@ app.include_router(comandos.router)
 app.include_router(dispositivos.router)
 app.include_router(triggers.router)
 app.include_router(alertas.router)
+app.include_router(vinherias.router)
 
 
 @app.get("/saude", tags=["geral"])

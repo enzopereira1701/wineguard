@@ -17,7 +17,7 @@ class NodeNaoConfirmou(Exception):
 
 
 async def obter(cliente, vinheria_id: str, device_id: str) -> dict:
-    cadastro._apikey(vinheria_id)
+    await cadastro._apikey(cliente, vinheria_id)
     entidade, servicepath = await cadastro._achar(cliente, vinheria_id, device_id)
     if entidade is None:
         raise cadastro.DispositivoNaoEncontrado(device_id)
@@ -28,7 +28,7 @@ async def obter(cliente, vinheria_id: str, device_id: str) -> dict:
 
 async def salvar(cliente, vinheria_id: str, device_id: str, corpo: dict) -> dict:
     """Valida, salva e envia ao Node. Devolve {recebido, deviceId, em} quando o Node confirma."""
-    cadastro._apikey(vinheria_id)
+    await cadastro._apikey(cliente, vinheria_id)
     triggers = gatilhos.validar_triggers(corpo)
     entidade_id = dominio.entidade_do_dispositivo(device_id)
     entidade, servicepath = await cadastro._achar(cliente, vinheria_id, device_id)

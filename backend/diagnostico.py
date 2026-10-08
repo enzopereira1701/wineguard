@@ -74,6 +74,9 @@ mostrar("Orion: assinaturas (confira se a condição tem TimeInstant)", s, c)
 s, c = pedir(f"http://{host}:1026/v2/entities?type=Alerta&limit=20&attrs=deviceId,variavel,sentido,valor,limite,inicio,fim", {**cab, "fiware-servicepath": "/"})
 mostrar("Orion: alertas guardados (service da vinheria, servicepath /)", s, c)
 
+s, c = pedir(f"http://{host}:1026/v2/entities?type=Vinheria&limit=50&attrs=nome,apikey,status,vencimento", {"fiware-service": "wineguard_admin", "fiware-servicepath": "/"})
+mostrar("Orion: vinherias cadastradas (service wineguard_admin)", s, c)
+
 s, c = pedir(f"http://{host}:1026/v2/entities/{entidade}?type=WineGuardNode&attrs=triggers,preset,setTriggers_status,setTriggers_info&metadata=dateModified", cab)
 mostrar(f"Orion: triggers e confirmação do setTriggers de {device}", s, c)
 

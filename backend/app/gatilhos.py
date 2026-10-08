@@ -7,7 +7,7 @@ o texto dos comandos para o Node e a montagem dos alertas. Testado em tests/test
 
 import math
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from .dominio import VARIAVEIS, ler_iso, para_iso, _valor
 
@@ -263,3 +263,39 @@ def contar_ativos(alertas: list) -> dict:
         if a["fim"] is None and a["deviceId"]:
             contagem[a["deviceId"]] = contagem.get(a["deviceId"], 0) + 1
     return contagem
+
+
+# -------------------------------------------------------------- estabilidade
+_SEGUNDOS = {"second": 1, "minute": 60, "hour": 3600, "day": 86400}
+
+
+def valores_do_sth(resposta, campo: str, inicio: datetime, fim: datetime) -> list:
+    """
+    Resposta agregada do STH-Comet (aggrMethod=min ou max) -> lista dos valores de 'campo' dentro do período.
+    Mesma leitura de blocos (origem + offset) do histórico; ignora grupos sem amostras.
+    """
+    try:
+        blocos = resposta["contextResponses"][0]["contextElement"]["attributes"][0]["values"]
+    except (KeyError, IndexError, TypeError):
+        return []
+    valores = []
+    for bloco in blocos:
+        origem = ler_iso(bloco["_id"]["origin"])
+        passo = _SEGUNDOS.get(bloco["_id"].get("resolution", "hour"), 3600)
+        for p in bloco.get("points", []):
+            if not p.get("samples") or p.get(campo) is None:
+                continue
+            quando = origem + timedelta(seconds=p["offset"] * passo)
+            if inicio - timedelta(seconds=passo) <= quando <= fim:
+                valores.append(p[campo])
+    return valores
+
+
+def montar_estabilidade(device_id: str, minimos: list, maximos: list, limite) -> dict:
+    """Variação da temperatura no período: menor mínimo e maior máximo. Sem dados: variação 0, estável."""
+    if not minimos or not maximos:
+        return {"deviceId": device_id, "min": None, "max": None, "variacao": 0, "instavel": False, "limite": limite}
+    menor, maior = min(minimos), max(maximos)
+    variacao = round(maior - menor, 2)
+    return {"deviceId": device_id, "min": menor, "max": maior, "variacao": variacao,
+            "instavel": variacao > limite, "limite": limite}

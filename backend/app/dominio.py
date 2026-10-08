@@ -334,3 +334,9 @@ def montar_resumo_item(atual: dict) -> dict:
         "ultimaLeitura": atual["ultimaLeitura"],
         "alertasAtivos": 0,
     }
+
+
+def so_dispositivos(entidades) -> list:
+    """[(device_id, entidade)] só do que é WineGuardNode:NNN (descarta fantasmas), em ordem de id."""
+    itens = [(device_id_da_entidade(e.get("id")), e) for e in entidades]
+    return sorted(((d, e) for d, e in itens if d), key=lambda par: par[0])

@@ -29,12 +29,6 @@ CBROKER_INTERNO = os.getenv("CBROKER_INTERNO", "http://fiware-orion:1026")
 STH_NOTIFY_INTERNO = os.getenv("STH_NOTIFY_INTERNO", "http://fiware-sth-comet:8666/notify")
 
 
-def apikey_da_vinheria(vinheria_id: str):
-    """
-    apikey da vinheria, ou None se a vinheria não existe.
-    Por enquanto só a vinheria padrão é conhecida; o cadastro de vinherias chega no Backend 4.
-    """
-    return APIKEY if vinheria_id == FIWARE_SERVICE else None
 
 # --- Triggers e alertas (Backend 3)
 # Liga o vigia: o loop que avalia os triggers a cada INTERVALO_VIGIA segundos (0 = desligado)
@@ -45,7 +39,8 @@ ESPERA_COMANDO_SEGUNDOS = float(os.getenv("ESPERA_COMANDO_SEGUNDOS", "8"))
 # Segundos sem o estado do Node bater com o esperado, antes de reenviar os alertas
 RECONCILIAR_SEGUNDOS = int(os.getenv("RECONCILIAR_SEGUNDOS", "15"))
 
-
-def vinherias_conhecidas() -> list:
-    """Vinherias que o vigia acompanha. Por enquanto só a padrão; o Backend 4 traz o cadastro."""
-    return [FIWARE_SERVICE]
+# --- Vinherias e estabilidade (Backend 4)
+# A vinheria padrão nasce com este prazo de mensalidade (dias a partir do primeiro uso)
+VENCIMENTO_PADRAO_DIAS = int(os.getenv("VENCIMENTO_PADRAO_DIAS", "90"))
+# De quantos em quantos segundos o vigia confere a estabilidade (variação em 24 h) de cada dispositivo
+ESTABILIDADE_INTERVALO = int(os.getenv("ESTABILIDADE_INTERVALO", "60"))

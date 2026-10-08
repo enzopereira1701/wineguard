@@ -11,39 +11,34 @@ Se o passo 4 falhar, o passo 3 é desfeito (não sobra dispositivo pela metade).
 
 from datetime import datetime
 
-from . import alertas, config, dominio, fiware, gatilhos
+from . import alertas, config, dominio, fiware, gatilhos, vinherias
 
 
-class VinheriaDesconhecida(Exception):
-    pass
+VinheriaDesconhecida = vinherias.VinheriaDesconhecida
+VinheriaSuspensa = vinherias.VinheriaSuspensa
 
 
 class DispositivoNaoEncontrado(Exception):
     pass
 
 
-def _apikey(vinheria_id: str) -> str:
-    apikey = config.apikey_da_vinheria(vinheria_id)
-    if not apikey:
-        raise VinheriaDesconhecida(vinheria_id)
-    return apikey
+async def _apikey(cliente, vinheria_id: str) -> str:
+    """apikey da vinheria. Levanta VinheriaDesconhecida (404) ou VinheriaSuspensa (403)."""
+    return (await vinherias.exigir(cliente, vinheria_id))["apikey"]
 
 
-def so_dispositivos(entidades):
-    """Descarta o que não é WineGuardNode:NNN (ex.: entidade-fantasma do IoT Agent), em ordem de id."""
-    itens = [(dominio.device_id_da_entidade(e.get("id")), e) for e in entidades]
-    return sorted(((d, e) for d, e in itens if d), key=lambda par: par[0])
+so_dispositivos = dominio.so_dispositivos
 
 
 async def listar(cliente, vinheria_id: str) -> list:
-    _apikey(vinheria_id)
+    await _apikey(cliente, vinheria_id)
     entidades = await fiware.listar_entidades(cliente, vinheria_id)
     return [dominio.montar_dispositivo(vinheria_id, e, config.FIWARE_SERVICEPATH) for _, e in so_dispositivos(entidades)]
 
 
 async def resumo(cliente, vinheria_id: str, agora: datetime) -> list:
     """Estado de todos os dispositivos da vinheria numa chamada só."""
-    _apikey(vinheria_id)
+    await _apikey(cliente, vinheria_id)
     entidades = await fiware.listar_entidades(cliente, vinheria_id)
     ativos = gatilhos.contar_ativos(await alertas.listar(cliente, vinheria_id, "ativos"))
     itens = []
@@ -55,22 +50,26 @@ async def resumo(cliente, vinheria_id: str, agora: datetime) -> list:
 
 
 async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> dict:
-    apikey = _apikey(vinheria_id)
+    apikey = await _apikey(cliente, vinheria_id)
     dados = dominio.validar_cadastro(corpo)
 
     # --- qual adega?
+    criar_adega = False
     if dados["novaAdega"]:
         servicepath = dominio.servicepath_da_nova_adega(dados["novaAdega"])
-        if await fiware.listar_entidades(cliente, vinheria_id, servicepath) or servicepath == config.FIWARE_SERVICEPATH:
+        if await vinherias.obter_adega(cliente, vinheria_id, servicepath) \
+                or await fiware.listar_entidades(cliente, vinheria_id, servicepath):
             raise ValueError("já existe uma adega com esse nome")
-        nome_adega = dados["novaAdega"]
+        nome_adega, criar_adega = dados["novaAdega"], True
     else:
         servicepath = dominio.servicepath_da_adega(dados["adegaId"], vinheria_id)
-        da_adega = await fiware.listar_entidades(cliente, vinheria_id, servicepath)
-        if not da_adega and servicepath != config.FIWARE_SERVICEPATH:
+        adega = await vinherias.obter_adega(cliente, vinheria_id, servicepath)
+        if adega is not None:
+            nome_adega = dominio._valor(adega, "nome") or dominio.nome_da_adega(servicepath)
+        elif await fiware.listar_entidades(cliente, vinheria_id, servicepath):  # adega antiga, sem registro
+            nome_adega = dominio.nome_da_adega(servicepath)
+        else:
             raise ValueError("adega não encontrada")
-        nome_adega = next((dominio._valor(e, "adegaNome") for e in da_adega if dominio._valor(e, "adegaNome")),
-                          dominio.nome_da_adega(servicepath))
     id_adega = dominio.adega_id(vinheria_id, servicepath)
 
     # --- infraestrutura da adega (idempotente)
@@ -78,8 +77,12 @@ async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> 
     await fiware.garantir_assinatura_sth(cliente, vinheria_id, servicepath)
 
     # --- device_id novo e registro COM apikey
-    todas = await fiware.listar_entidades(cliente, vinheria_id)
-    minimo = dominio.proximo_numero(d for d, _ in so_dispositivos(todas))
+    # o id é global: olha os dispositivos de TODAS as vinherias (o contador pode estar começando agora)
+    usados = [d for d, _ in so_dispositivos(await fiware.listar_entidades(cliente, vinheria_id))]
+    for v in await vinherias.listar(cliente, agora, contar=False):
+        if v["id"] != vinheria_id:
+            usados += [d for d, _ in so_dispositivos(await fiware.listar_entidades(cliente, v["id"]))]
+    minimo = dominio.proximo_numero(usados)
     device_id = None
     for _ in range(5):
         numero = await fiware.reservar_numero(cliente, minimo)
@@ -103,6 +106,8 @@ async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> 
         except fiware.FiwareIndisponivel:
             pass  # o erro original é o que importa
         raise
+    if criar_adega:
+        await vinherias.garantir_adega(cliente, vinheria_id, servicepath, nome_adega)
     fiware.lembrar_servicepath(vinheria_id, device_id, servicepath)
 
     return {
@@ -122,7 +127,7 @@ async def _achar(cliente, vinheria_id: str, device_id: str):
 
 async def atualizar(cliente, vinheria_id: str, device_id: str, corpo: dict) -> dict:
     """Renomeia o dispositivo. Trocar de adega ainda não é suportado."""
-    _apikey(vinheria_id)
+    await _apikey(cliente, vinheria_id)
     entidade_id = dominio.entidade_do_dispositivo(device_id)
     entidade, servicepath = await _achar(cliente, vinheria_id, device_id)
     if entidade is None:
@@ -146,7 +151,7 @@ async def remover(cliente, vinheria_id: str, device_id: str) -> None:
     Tira o dispositivo do IoT Agent e do Orion. Antes manda 'suspend' ao Node (se der): sem isso um Node
     ainda ligado continuaria publicando e o IoT Agent o cadastraria sozinho de novo.
     """
-    _apikey(vinheria_id)
+    await _apikey(cliente, vinheria_id)
     entidade_id = dominio.entidade_do_dispositivo(device_id)
     entidade, servicepath = await _achar(cliente, vinheria_id, device_id)
     if entidade is not None:
