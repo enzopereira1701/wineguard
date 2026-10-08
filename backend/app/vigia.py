@@ -118,8 +118,8 @@ async def ciclo(cliente, vinheria_id: str, agora: datetime, estado: EstadoVigia)
         # ---- reconciliação: o Node diz o mesmo que o backend espera?
         em_alerta = {v: estado.ativos[(vinheria_id, device_id, v)]["sentido"]
                      for v in dominio.VARIAVEIS if (vinheria_id, device_id, v) in estado.ativos}
-        if gatilhos.precisa_reconciliar(bool(em_alerta), atual["state"], agora,
-                                        estado.ultimo_comando.get(chave), config.RECONCILIAR_SEGUNDOS):
+        if gatilhos.precisa_reconciliar(bool(em_alerta), atual["state"], agora, estado.ultimo_comando.get(chave),
+                                        dominio.ler_iso(atual["ultimaLeitura"]), config.RECONCILIAR_SEGUNDOS):
             eventos.append(("reconciliar", device_id))
             for variavel in dominio.VARIAVEIS:
                 sentido = em_alerta.get(variavel)

@@ -178,6 +178,15 @@ class TestReconciliacao(CasoVigia):
         self.assertIn(("reconciliar", "wgn001"), eventos)
         self.assertEqual(self.comandos("alert"), [("alert", "t,high,0"), ("alert", "h,high,0"), ("alert", "l,high,0")])
 
+    async def test_leitura_velha_do_node_nao_reconcilia(self):
+        # o Node lento ainda mostra 'alerta' de uma leitura anterior ao comando de encerrar: não reenvia
+        await self.volta(0, temperatura=16)
+        await self.volta(5, temperatura=14, state="alerta")      # encerra e manda alert ...,0
+        n = len(self.comandos("alert"))
+        eventos = await self.volta(25, temperatura=14, state="alerta", segundos_atras=25)  # leitura de +0 s
+        self.assertNotIn(("reconciliar", "wgn001"), eventos)
+        self.assertEqual(len(self.comandos("alert")), n)
+
     async def test_nao_reenvia_a_cada_volta(self):
         await self.volta(0, temperatura=13)
         await self.volta(20, temperatura=13, state="alerta")

@@ -158,13 +158,20 @@ class TestReconciliar(unittest.TestCase):
         self.assertFalse(gatilhos.precisa_reconciliar(True, "alerta", T0, None))
         self.assertFalse(gatilhos.precisa_reconciliar(False, "ok", T0, None))
 
-    def test_divergencia_espera_o_node_refletir(self):
-        recente = T0 - timedelta(seconds=5)
-        velho = T0 - timedelta(seconds=15)
-        self.assertFalse(gatilhos.precisa_reconciliar(True, "ok", T0, recente))
-        self.assertTrue(gatilhos.precisa_reconciliar(True, "ok", T0, velho))
+    def test_nunca_comandou_e_diverge(self):
         self.assertTrue(gatilhos.precisa_reconciliar(True, "ok", T0, None))
-        self.assertTrue(gatilhos.precisa_reconciliar(False, "alerta", T0, velho))
+
+    def test_espera_entre_reenvios(self):
+        leitura = T0 - timedelta(seconds=1)
+        self.assertFalse(gatilhos.precisa_reconciliar(True, "ok", T0, T0 - timedelta(seconds=10), leitura))
+        self.assertTrue(gatilhos.precisa_reconciliar(True, "ok", T0, T0 - timedelta(seconds=20), leitura))
+        self.assertTrue(gatilhos.precisa_reconciliar(False, "alerta", T0, T0 - timedelta(seconds=20), leitura))
+
+    def test_leitura_anterior_ao_comando_nao_conta(self):
+        comando = T0 - timedelta(seconds=20)
+        for leitura in (None, comando - timedelta(seconds=5), comando, comando + timedelta(seconds=2)):
+            self.assertFalse(gatilhos.precisa_reconciliar(True, "ok", T0, comando, leitura), str(leitura))
+        self.assertTrue(gatilhos.precisa_reconciliar(True, "ok", T0, comando, comando + timedelta(seconds=3)))
 
     def test_suspenso_ou_desconhecido_nao_reconcilia(self):
         for estado in ("suspenso", None, "aguardando"):

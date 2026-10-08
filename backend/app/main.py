@@ -26,6 +26,8 @@ from .rotas import alertas, comandos, dispositivos, leituras, triggers
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s", datefmt="%H:%M:%S")
 
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 
 @asynccontextmanager
 async def ciclo_de_vida(app: FastAPI):

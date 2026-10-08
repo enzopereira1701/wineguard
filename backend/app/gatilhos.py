@@ -148,16 +148,24 @@ def comando_alerta(variavel: str, sentido: str, ligar: bool) -> str:
     return f"{LETRA[variavel]},{DIRECAO[sentido]},{1 if ligar else 0}"
 
 
-def precisa_reconciliar(esperado_alerta: bool, state_do_node, agora: datetime, ultimo_comando, espera: int = 15) -> bool:
+def precisa_reconciliar(esperado_alerta: bool, state_do_node, agora: datetime, ultimo_comando,
+                        ultima_leitura=None, espera: int = 15, margem: int = 3) -> bool:
     """
-    O Node diz 'alerta' quando devia estar 'ok' (ou o contrário)? Só confirma a divergência depois de
-    'espera' segundos do último comando enviado: o Node leva até um ciclo de telemetria para refletir.
+    O Node diz 'alerta' quando devia estar 'ok' (ou o contrário)?
+    Só vale a divergência se o Node publicou DEPOIS do último comando (margem de 'margem' s para a rede):
+    uma leitura mais velha que o comando ainda não reflete o que mandamos. Isso evita reenviar à toa
+    quando o Node está lento (o simulador do Wokwi chega a publicar a cada 12 s). E nunca reenvia mais
+    de uma vez a cada 'espera' segundos.
     """
     if state_do_node not in ("ok", "alerta"):
         return False
     if (state_do_node == "alerta") == esperado_alerta:
         return False
-    return ultimo_comando is None or (agora - ultimo_comando).total_seconds() >= espera
+    if ultimo_comando is None:
+        return True
+    if (agora - ultimo_comando).total_seconds() < espera:
+        return False
+    return ultima_leitura is not None and (ultima_leitura - ultimo_comando).total_seconds() >= margem
 
 
 def estado_do_comando(entidade, comando: str, depois_de=None) -> str:
