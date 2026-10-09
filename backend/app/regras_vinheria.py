@@ -56,13 +56,15 @@ def gerar_apikey(nome: str, aleatorio: str) -> str:
 
 
 def validar_nova_vinheria(corpo) -> dict:
-    """Corpo do POST /vinherias: {nome, vencimento 'AAAA-MM-DD' (ou ISO)}. Devolve {nome, vencimento: datetime UTC}."""
+    """Corpo do POST /vinherias: {nome, vencimento 'AAAA-MM-DD' (ou ISO)}. Devolve {nome, vencimento: datetime UTC ou None}."""
     if not isinstance(corpo, dict):
         raise ValueError("corpo inválido")
     nome = str(corpo.get("nome") or "").strip()
     if not 1 <= len(nome) <= 60:
         raise ValueError("nome da vinheria deve ter de 1 a 60 caracteres")
     texto = str(corpo.get("vencimento") or "").strip()
+    if not texto:
+        return {"nome": nome, "vencimento": None}  # sem data: quem cria usa o prazo padrão
     try:
         if _DATA.match(texto):
             vencimento = datetime.strptime(texto, "%Y-%m-%d").replace(tzinfo=timezone.utc)

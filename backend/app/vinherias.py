@@ -98,7 +98,8 @@ async def criar(cliente, corpo: dict, agora: datetime) -> dict:
     existentes = {v["id"] for v in await listar(cliente, agora, contar=False)}
     vinheria_id = regras.id_da_vinheria(dados["nome"], existentes)
     apikey = regras.gerar_apikey(dados["nome"], secrets.token_hex(2))
-    atributos = regras.corpo_vinheria(dados["nome"], apikey, dados["vencimento"], agora)
+    vencimento = dados["vencimento"] or agora + timedelta(days=config.VENCIMENTO_PADRAO_DIAS)
+    atributos = regras.corpo_vinheria(dados["nome"], apikey, vencimento, agora)
     entidade = regras.entidade_da_vinheria(vinheria_id)
     await fiware.criar_entidade(cliente, config.ADMIN_SERVICE, SERVICEPATH, entidade, TIPO, atributos)
     await garantir_adega(cliente, vinheria_id, "/adega1", "Adega 1")

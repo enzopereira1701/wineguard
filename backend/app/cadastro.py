@@ -50,7 +50,8 @@ async def resumo(cliente, vinheria_id: str, agora: datetime) -> list:
 
 
 async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> dict:
-    apikey = await _apikey(cliente, vinheria_id)
+    vinheria = await vinherias.exigir(cliente, vinheria_id)
+    apikey = vinheria["apikey"]
     dados = dominio.validar_cadastro(corpo)
 
     # --- qual adega?
@@ -112,7 +113,7 @@ async def cadastrar(cliente, vinheria_id: str, corpo: dict, agora: datetime) -> 
 
     return {
         "dispositivo": dominio.montar_dispositivo(vinheria_id, {"id": entidade_id, **metadados}, servicepath),
-        "config": {"deviceId": device_id, "apikey": apikey, "nomeVinheria": config.NOME_VINHERIA,
+        "config": {"deviceId": device_id, "apikey": apikey, "nomeVinheria": vinheria["nome"],
                    "nomeAdega": nome_adega},
     }
 

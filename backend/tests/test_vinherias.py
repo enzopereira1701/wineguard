@@ -58,11 +58,16 @@ class TestNovaVinheria(unittest.TestCase):
 
     def test_erros(self):
         ruins = [None, {}, {"nome": "", "vencimento": "2026-11-30"}, {"nome": "x" * 61, "vencimento": "2026-11-30"},
-                 {"nome": "Q"}, {"nome": "Q", "vencimento": ""}, {"nome": "Q", "vencimento": "amanhã"},
+                 {"nome": "Q", "vencimento": "amanhã"},
                  {"nome": "Q", "vencimento": "2026-13-45"}]
         for corpo in ruins:
             with self.assertRaises(ValueError, msg=str(corpo)):
                 regras.validar_nova_vinheria(corpo)
+
+
+    def test_sem_vencimento_usa_o_padrao(self):
+        for corpo in [{"nome": "Q"}, {"nome": "Q", "vencimento": ""}, {"nome": "Q", "vencimento": None}]:
+            self.assertIsNone(regras.validar_nova_vinheria(corpo)["vencimento"])
 
 
 class TestVencimento(unittest.TestCase):
@@ -237,6 +242,11 @@ class TestDispositivosEmOutraVinheria(CasoVin):
         self.assertIn((v["id"], "/adega1", v["apikey"]), self.fake.grupos)
         self.assertIn((v["id"], "/adega1", "urn:ngsi-ld:WineGuardNode:002"), self.fake.entidades)
 
+    async def test_config_traz_o_nome_da_vinheria_certa(self):
+        v = await self.criar()
+        r = await cadastro.cadastrar(self.fake, v["id"], {"nome": "X", "adegaId": f"{v['id']}/adega1"}, AGORA)
+        self.assertEqual(r["config"]["nomeVinheria"], "Quinta do Sol")
+
     async def test_cada_vinheria_ve_so_os_seus(self):
         v = await self.criar()
         await cadastro.cadastrar(self.fake, v["id"], {"nome": "X", "adegaId": f"{v['id']}/adega1"}, AGORA)
@@ -299,6 +309,10 @@ class TestSuspensao(CasoVin):
         for chave, valor in antes.items():
             self.assertIn(chave, self.fake.entidades)
             self.assertEqual(valor["type"], self.fake.entidades[chave]["type"])
+
+    async def test_criar_sem_vencimento_usa_90_dias(self):
+        v = await vinherias.criar(self.fake, {"nome": "Sem Data"}, AGORA)
+        self.assertEqual(v["vencimento"], (AGORA + timedelta(days=config.VENCIMENTO_PADRAO_DIAS)).strftime("%Y-%m-%dT%H:%M:%S.000Z"))
 
     async def test_reativar_mantem_vencimento_em_dia(self):
         v = await self.criar()
