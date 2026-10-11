@@ -9,7 +9,7 @@ Ficha de decisões do **CP5 Vinheria Full** (marcha.dev). Cole este arquivo no c
   - **Dashboard:** o site em React
 - **Entrega e hands-on:** 30/10/2026
 - **Integrantes:** Enzo Pereira, Raphael Mascarenhas, Yannick Davila e Alysson Souto
-- **Última atualização desta ficha:** 07/10/2026
+- **Última atualização desta ficha:** 11/10/2026
 
 ---
 
@@ -52,12 +52,14 @@ ESP32 DevKit de 30 pinos, sem solda, com protoboard pequeno como distribuidor de
 - Histórico: 2.0 (base); 2.1 sinal do LDR corrigido e limites padrão iguais ao preset "Guarda geral"; 2.2 botão numa tarefa própria; 2.3 botão detecta a polaridade sozinho, bipes novos.
 - FreeRTOS: `loop()` cuida de rede, sensores e telemetria; uma tarefa para botão, LED e buzzer (tick de 2 ms); outra para o OLED.
 - `config.h` com credenciais **fora do GitHub**; só o `config.example.h` vai. Opções: `SIMULACAO_WOKWI` (1 no Wokwi, **0 na bancada**), `BUZZER_ATIVO_EM_LOW`, `ALTA_CONTINUO`, `LDR_INVERTIDO` e `BOTAO_PRESSIONADO` (opcional).
-- `AVALIACAO_LOCAL_SEMPRE`: 1 enquanto não há backend. **Voltar para 0** quando o backend entrar.
+- `AVALIACAO_LOCAL_SEMPRE`: 1 no firmware da bancada (era para o período sem backend). O backend já existe (09/10): **voltar para 0 no teste ponta a ponta (15/10)** e regravar o Node. No Wokwi já está 0.
 - Limites padrão do Node (até receber os do backend): temperatura 10 a 15 °C, umidade 60 a 75 %, luz 0 a 10 %.
 - Logo do OLED: escudo com cacho, 45x64 px, 1 bit (`icones.h`).
 - Bibliotecas: PubSubClient, Adafruit GFX, Adafruit SSD1306, DHT sensor library (e a Adafruit Unified Sensor). Pacote **esp32 3.3.x**. **Anotar as versões** em `hardware/firmware/README.md`.
 - Gravação na bancada: se aparecer `Invalid head of packet (0x80)`, baixar o **Upload Speed** para 115200 e trocar o cabo USB.
 - **Estado (06/10):** o Node físico foi montado e roda sem nuvem (OLED, LED, buzzer, botão, DHT22 e LDR). Falta testar com a nuvem e a caixa.
+- **Estado (09/10):** o Node físico (`wgn005`, cadastrado pela API na `vin_demo`) foi testado **com a nuvem**: conecta no Wi-Fi de 2,4 GHz, publica, recebe `setTriggers`, `alert`, `suspend` e `resume`, e grava histórico contínuo no STH-Comet. Falta a caixa 3D.
+- O ESP32 só conecta em Wi-Fi de **2,4 GHz** (no roteador do grupo é a rede sem o sufixo "5g").
 
 ### Caixa 3D
 Molde de papelão pronto. Um amigo modelou, e a faculdade imprime (previsto para o fim da semana de 06/10). Tampa removível por parafusos. DHT22 longe do ESP32 e com ventilação; LDR separado do LED.
@@ -105,7 +107,13 @@ Atributos: `temperature`, `humidity`, `luminosity`, `state` (ok, alerta ou suspe
 - **Suspensão de vinheria:** estados `ativa` e `suspensa`, com vencimento. Ao suspender, manda `suspend` aos Nodes; a API recusa consultas daquela vinheria; o histórico é preservado. Botão manual, suspensão automática por vencimento e "simular inadimplência" para a demonstração.
 - Cadastro de dispositivo: o backend escolhe o próximo `wgn###`, cadastra no IoT Agent **com apikey**, garante a assinatura e devolve o bloco do `config.h`.
 - Remover um dispositivo: manda `suspend`, apaga o cadastro e a entidade (limitação: se o ESP32 continuar publicando, ele é recriado).
+- **Vinherias (Backend 4, validado no FIWARE real em 09/10):** vinheria e adega são entidades `Vinheria` (service `wineguard_admin`) e `Adega`. A `vin_demo` (apikey `winedemo`) nasce sozinha. `POST /api/vinherias` cria a vinheria com id `vin_<nome>`, **apikey própria** (`<nome><4 hex>`), vencimento (padrão 90 dias) e uma "Adega 1". O cadastro de dispositivo usa a apikey da vinheria.
+- **O `device_id` é global** (um contador só para todas as vinherias): o MQTT identifica o Node só por `apikey` + `device_id`, então `wgn004` na Quinta do Sol e `wgn005` na `vin_demo` nunca se repetem.
+- **Suspensão:** `suspender` manda `suspend` a todos os Nodes e a API passa a responder **403** para a vinheria; o vigia encerra os alertas e reenvia `suspend` a quem ainda publicar. `reativar` manda `resume` (e, se o vencimento já passou, renova por 30 dias). `simular-inadimplencia` coloca o vencimento em ontem e suspende. Vencimento vencido suspende sozinho.
+- **Estabilidade:** `GET /api/dispositivos/{id}/estabilidade` (mínimo e máximo das últimas 24 h pelo STH-Comet, `aggrMethod=min/max`). O vigia confere a cada 60 s e abre o alerta `estabilidade` quando a variação passa do `estabilidadeMax` (padrão 2 °C). Não avalia Node offline.
+- **Onde roda:** na instância, como contêiner (segunda 19/10), ou no PC durante o desenvolvimento. **Só um processo** do backend por vez (dois vigias duplicam os alertas).
 - Python instalado: 3.14.3. No Git Bash, `python` cai na Microsoft Store; **usar `py`**.
+- **Lacunas do histórico:** a API devolve só os pontos que existem (sem preencher buracos, para não inventar dados). O dashboard quebra a linha do gráfico onde o intervalo entre dois pontos passa de 1,5 vez o passo (1 min na janela de 1 h; 1 h em 24 h e 7 d) e ignora esses vazios nas contas de mínimo e máximo.
 
 ---
 
@@ -153,9 +161,9 @@ O que achamos são recomendações de especialistas, **não uma norma oficial**.
 
 ## 6. Dashboard
 
-**Pilha (a mesma dos projetos do grupo, ex.: `loja_gamer`):** React 19 com Vite (JavaScript), React Router 7, Tailwind CSS 4 e Recharts. Publicado na **Vercel**; funciona em PC e celular (navbar fixa e translúcida no PC; barra inferior no celular). PWA se sobrar tempo.
+**Pilha (a mesma dos projetos do grupo, ex.: `loja_gamer`):** React 19 com Vite (JavaScript), React Router 7, Tailwind CSS 4 e Recharts. **Não será publicado**: roda no PC do grupo (`npm run dev` ou build local) e é aberto na hora da apresentação. Funciona em PC e celular (navbar fixa e translúcida no PC; barra inferior no celular). PWA se sobrar tempo.
 
-**Estado (06/10):** o front-end está **construído e testado com dados de demonstração** (simulador de sensores no navegador), com guia passo a passo em PDF e prévia publicada. O projeto de referência está em `frontend/` (quando for enviado ao repositório). Falta ligar ao backend e rodar o `npm install`/`npm run dev` no PC do grupo (o visual com Tailwind e os gráficos reais ainda não foram vistos).
+**Estado (06/10):** o front-end está **construído e testado com dados de demonstração** (simulador de sensores no navegador), com guia passo a passo em PDF e prévia publicada. O projeto de referência está em `frontend/` (quando for enviado ao repositório). Falta ligar ao backend (`VITE_USE_MOCK=false`, 12 a 14/10). O gráfico passa a quebrar a linha nas lacunas do histórico (ver seção 4).
 
 **Dados:** nenhuma tela busca dados direto. Tudo passa por `src/services/api.js`, que usa o simulador (`VITE_USE_MOCK=true`) ou o backend (`VITE_API_URL`). O formato das respostas é o **contrato** em `docs/api-contrato.md`.
 
@@ -181,19 +189,19 @@ Telas:
 - Slogan: "Cada garrafa no ponto certo."
 - Arquivos em `frontend/public/`: `wineguard-emblema.svg`, `-floreio.svg` (capa), `-mono.svg`, `wineguard-simbolo-compacto.svg` (navbar, favicon, OLED), `wineguard-icone-app.svg`, `icon-192.png`, `icon-512.png`, `favicon-32.png`, `favicon-48.png`.
 - A imagem de referência foi gerada com apoio de IA e **redesenhada em SVG**. Registrar isso no README.
-- Falta: logo horizontal (emblema e palavra) para a navbar.
+- Logo horizontal (emblema e palavra) para a navbar: pronta (`wineguard-logo-horizontal.svg` e `.png`).
 
 ---
 
-## 8. Docker Compose
+## 8. Docker Compose (decidido em 10/10)
 
 - **Um compose único nosso**, baseado no do professor (dar o crédito), na raiz do repositório.
-- Sobe: Mosquitto, IoT Agent, Orion, STH-Comet, dois MongoDB, o **backend**, um **proxy Caddy** (HTTPS automático) e um serviço **DuckDNS** que mantém o nome apontando para o IP do lab.
-- Versões fixas das imagens, volumes nomeados, `restart: unless-stopped`, configuração por `.env` (com `.env.example`).
-- O backend fala com o FIWARE pela rede interna do Docker. No final ficam abertas só **1883, 80 e 443**. As portas 1026, 4041, 8666 e 27017 deixam de ficar públicas.
+- Sobe: Mosquitto, IoT Agent, Orion, STH-Comet, dois MongoDB e o **backend** (`Dockerfile` do backend, código vindo do GitHub com `git clone` na instância).
+- **Sem DuckDNS, sem Caddy e sem HTTPS.** Sem nome, o HTTPS não é possível, e a Vercel não é usada, então não há conteúdo misto. O dashboard roda no PC (`http://localhost`) e chama o backend em `http://<IP do dia>:8000`.
+- **Prática fixa em toda sessão do lab: colocar o IP novo em tudo que precisa:** `backend/.env` (`FIWARE_HOST`, só se o backend rodar no PC), `MQTT_BROKER` do `config.h` do Node físico (e regravar), `MQTT_BROKER` do `config.h` do Wokwi, e o endereço da API no dashboard.
+- Portas abertas no final: **1883** (Node) e **8000** (backend). As 1026, 4041 e 8666 deixam de ficar públicas (o backend fala com o FIWARE pela rede interna do Docker). A 27017 nunca fica aberta.
+- Versões fixas das imagens, volumes nomeados (os dados sobrevivem ao End Lab), `restart: unless-stopped`, configuração por `.env` (com `.env.example`).
 - Mosquitto com `mosquitto.conf` no repositório.
-- Os dois lados (ESP32 e Vercel) usam o **nome DuckDNS**, nunca o IP.
-- A conferir no lab ligado: ler o compose do professor na máquina; imagens do DuckDNS e do Caddy; liberar 80 e 443.
 - Comando atual na AWS: `docker compose` (com espaço). Pode ser preciso instalar `docker-compose-plugin`.
 
 ---
@@ -261,7 +269,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - O LDR mede em % relativa, não em lux.
 - O DHT22 tem margem de ±0,5 °C.
 - O IoT Agent recria dispositivos apagados enquanto o ESP32 continuar publicando.
-- O IP do Learner Lab muda a cada sessão (mitigado com o DuckDNS).
+- O IP do Learner Lab muda a cada sessão; o IP novo é colocado à mão em tudo que precisa (sem DuckDNS).
+- Sem HTTPS: o dashboard e a API falam em HTTP, e o dashboard não é publicado.
 - As referências de guarda são recomendações de especialistas, não uma norma.
 
 **Evolução prevista:** login por usuário, perfis (admin e vinheria), tokens, banco relacional, MQTT com TLS, cancelamento com carência, exportação em CSV, WiFiManager e alertas externos.
@@ -278,26 +287,28 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Dashboard (front-end)** rodando no PC com dados de demonstração, redesenhado (navegação, cartões, imagens, rodapé), com contrato da API
 - Todas as definições deste documento
 - **Backend 1** (FastAPI): leitura atual e histórico, testados com dados reais do Orion e do STH-Comet (07/10)
-- Conta DuckDNS criada (`wineguard-cp5.duckdns.org`; atualização do IP ainda manual)
+- Conta DuckDNS criada (`wineguard-cp5.duckdns.org`), **sem uso** a partir de 10/10
+- **Backend 2, 3 e 4** no GitHub, com 176 testes e validados no FIWARE real (09/10): cadastro com apikey, triggers com confirmação do Node, vigia de alertas, vinherias, adegas, suspensão e estabilidade
+- **Node físico `wgn005` na nuvem** (09/10): envia, recebe comandos e grava histórico
 
 ### Falta
-- **Backend (FastAPI):** faltam o Backend 2 (cadastro de dispositivo, resumo e comandos), o 3 (triggers e laço de alerta de 5 s) e o 4 (vinherias, adegas, suspensão, estabilidade). É o caminho crítico.
-- **Dashboard:** ligar ao backend, enviar para o `frontend/` do GitHub e publicar na Vercel.
-- **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; publicar na Vercel junto com o dashboard.
-- **Hardware:** testar o Node com a nuvem; montar na caixa 3D (a faculdade imprime); fotos.
-- **Nuvem:** `docker-compose.yml`, Caddy (HTTPS); fechar portas; testar parar e iniciar o lab.
+- **Dashboard:** ligar ao backend (12 a 14/10), tratar as lacunas do histórico no gráfico, e enviar ao `frontend/` do GitHub (16/10). Não será publicado.
+- **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; basta estar no GitHub e abrir localmente no dia.
+- **Hardware:** teste ponta a ponta com o Node físico, `AVALIACAO_LOCAL_SEMPRE` em 0, montar na caixa 3D (a faculdade imprime), fotos.
+- **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
 |---|---|
-| 7 a 11/10 | Backend (leitura, cadastro, comandos, triggers, loop de alertas, vinherias e suspensão); Node físico na nuvem |
-| 12 a 18/10 | Integração do front com o backend; teste ponta a ponta com o Node físico; `AVALIACAO_LOCAL_SEMPRE` em 0; dashboard no GitHub (16/10); portfólio entregue pelo colega |
-| 19 a 25/10 | DuckDNS, Compose, Caddy, HTTPS; Vercel; testes na nuvem e no celular; ponto de corte em 25/10 |
-| 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms |
-| 30/10 | Hands-on |
+| 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
+| 10 e 11/10 | Margem do backend e decisão sobre as lacunas (feita); começar o dashboard |
+| 12 a 18/10 | Integração do front com o backend (12 a 14); teste ponta a ponta com o Node físico e `AVALIACAO_LOCAL_SEMPRE` em 0 (15); dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
+| 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
+| 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
+| 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
-**Se apertar, cortar nesta ordem:** PWA e logo horizontal; alerta de estabilidade; calibração da luz; compose completo (ficando com o do professor e um manual de subida); suspensão automática por vencimento (fica o botão manual); vinherias e suspensão inteiras.
+**Se apertar, cortar nesta ordem:** PWA; calibração da luz; o backend na instância (ficando com ele no PC); telas de vinherias e suspensão no dashboard (o backend já tem).
 
 O hands-on vale 40 % e o front 20 %: o mínimo que não pode falhar é o Node enviando dados reais, o dashboard com cadastro, gráficos do STH-Comet e ajuste de triggers, e o alarme disparando por ordem do sistema.
 
@@ -305,12 +316,13 @@ O hands-on vale 40 % e o front 20 %: o mínimo que não pode falhar é o Node en
 
 ## 13. Rotina do dia da apresentação
 
-1. Iniciar o lab e a instância, e esperar o DuckDNS atualizar o nome.
-2. Conferir que os containers estão no ar e que o dashboard abre.
-3. Ligar o Node e confirmar que ele aparece online.
-4. Plano B: hotspot do celular, vídeo gravado e o Wokwi aberto.
-5. Ao terminar: **End Lab**.
-
+Chegar **30 minutos antes** (o hands-on dura até 1h30).
+1. **Start Lab**, esperar a bolinha verde e copiar o **IP público** da instância.
+2. Conferir os contêineres (`sudo docker ps`): FIWARE e backend no ar.
+3. Trocar o IP em tudo: `MQTT_BROKER` do `config.h` do Node (e **regravar**), do Wokwi e o endereço da API no dashboard (e `backend/.env`, só se o backend rodar no PC).
+4. Abrir o dashboard no PC e ligar o Node: ele deve aparecer online.
+5. Plano B: hotspot do celular (2,4 GHz), vídeo gravado e o Wokwi aberto.
+6. Ao terminar: **End Lab**.
 
 ---
 
@@ -326,11 +338,22 @@ Dois clientes com o mesmo `clientId` se derrubam em loop no Mosquitto. A simula�
 o sufixo `_sim` (`wineguard_wgn001_sim`) para não brigar com o ESP32 físico.
 
 **O histórico do STH-Comet tem lacunas.**
-O STH só grava quando o Orion avisa que algo mudou, então há pontos só em alguns minutos. O
-dashboard precisa lidar com isso (ligar os pontos no gráfico ou preencher os buracos no backend).
+O STH só grava quando o Orion avisa que algo mudou. Com `TimeInstant` na condição da assinatura o histórico ficou contínuo (um ponto por minuto, confirmado com o Wokwi e com o Node físico); os buracos que sobram são de Node offline ou vinheria suspensa. **Decisão (11/10):** a API devolve só pontos reais e o dashboard quebra a linha (ver seção 4).
 
 **O Wokwi desacelera em aba escondida.**
 Para testar, deixar a janela do Wokwi visível ao lado do `/docs`. É só do simulador.
 
 **Operação do lab:** os containers sobem sozinhos quando o lab liga e o cadastro do `wgn001`
 sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
+
+---
+
+## 15. Aprendizados de 08 e 09/10/2026: Backend 2 a 4 e Node físico
+
+- **O comando espera a confirmação do Node.** O `PUT /triggers` responde 200 quando o Node confirma pelo `cmdexe`; sem confirmação em 8 s responde 504 (os limites ficam salvos e são reenviados quando o Node voltar). No Wokwi lento ou com a janela escondida isso dá 504; na placa física responde em poucos segundos.
+- **O `device_id` precisa ser único no sistema todo,** não só dentro da vinheria (ver seção 4). O primeiro cadastro numa vinheria nova olha os dispositivos de todas.
+- **Um Node suspenso não publica nada,** nem `st|suspenso`. A API usa o estado guardado da vinheria, e o vigia reenvia `suspend` a quem ainda publicar.
+- **Reativar com o Node reconectando** pode exigir repetir o `reativar` (o `resume` chega quando o Node volta ao broker). No Wokwi lento é comum; na placa física é raro.
+- **Os dados do FIWARE sobrevivem ao End Lab** (volumes do Mongo): vinherias, dispositivos, alertas e histórico continuam no dia seguinte. Só o IP muda.
+- **Só um processo do backend por vez:** dois vigias duplicariam os alertas.
+- **O `config.h` de verdade fica fora do GitHub** (tem a senha do Wi-Fi). Não colar prints dele em lugares compartilhados.
