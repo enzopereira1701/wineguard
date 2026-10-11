@@ -163,7 +163,7 @@ O que achamos são recomendações de especialistas, **não uma norma oficial**.
 
 **Pilha (a mesma dos projetos do grupo, ex.: `loja_gamer`):** React 19 com Vite (JavaScript), React Router 7, Tailwind CSS 4 e Recharts. **Não será publicado**: roda no PC do grupo (`npm run dev` ou build local) e é aberto na hora da apresentação. Funciona em PC e celular (navbar fixa e translúcida no PC; barra inferior no celular). PWA se sobrar tempo.
 
-**Estado (06/10):** o front-end está **construído e testado com dados de demonstração** (simulador de sensores no navegador), com guia passo a passo em PDF e prévia publicada. O projeto de referência está em `frontend/` (quando for enviado ao repositório). Falta ligar ao backend (`VITE_USE_MOCK=false`, 12 a 14/10). O gráfico passa a quebrar a linha nas lacunas do histórico (ver seção 4).
+**Estado (11/10):** o front-end está **ligado ao backend real** (`VITE_USE_MOCK=false`) e **testado em todas as telas com dados do FIWARE**, no PC e no celular (modo dispositivo do Chrome). O gráfico quebra a linha nas lacunas do histórico e mostra pontos nas leituras isoladas. Ele roda hoje em `~/Desktop/wineguard-dashboard`; entra no repositório em `frontend/` em 16/10 (com `.env` fora do Git e `.env.example` genérico).
 
 **Dados:** nenhuma tela busca dados direto. Tudo passa por `src/services/api.js`, que usa o simulador (`VITE_USE_MOCK=true`) ou o backend (`VITE_API_URL`). O formato das respostas é o **contrato** em `docs/api-contrato.md`.
 
@@ -290,9 +290,10 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - Conta DuckDNS criada (`wineguard-cp5.duckdns.org`), **sem uso** a partir de 10/10
 - **Backend 2, 3 e 4** no GitHub, com 176 testes e validados no FIWARE real (09/10): cadastro com apikey, triggers com confirmação do Node, vigia de alertas, vinherias, adegas, suspensão e estabilidade
 - **Node físico `wgn005` na nuvem** (09/10): envia, recebe comandos e grava histórico
+- **Dashboard ligado ao backend real e validado** (11/10): painel, comandos (mute e identificar), triggers com confirmação, dispositivos (cadastro, edição, remoção), alertas com filtros, vinherias (nova com vencimento opcional, suspender, reativar), página Suspenso, Início e layout no celular
 
 ### Falta
-- **Dashboard:** ligar ao backend (12 a 14/10), tratar as lacunas do histórico no gráfico, e enviar ao `frontend/` do GitHub (16/10). Não será publicado.
+- **Dashboard:** enviar ao `frontend/` do GitHub (16/10; `.env` fora do Git, sem `.zip`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
 - **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; basta estar no GitHub e abrir localmente no dia.
 - **Hardware:** teste ponta a ponta com o Node físico, `AVALIACAO_LOCAL_SEMPRE` em 0, montar na caixa 3D (a faculdade imprime), fotos.
 - **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
@@ -302,8 +303,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | Período | Foco |
 |---|---|
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
-| 10 e 11/10 | Margem do backend e decisão sobre as lacunas (feita); começar o dashboard |
-| 12 a 18/10 | Integração do front com o backend (12 a 14); teste ponta a ponta com o Node físico e `AVALIACAO_LOCAL_SEMPRE` em 0 (15); dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
+| 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
+| 12 a 18/10 | Folga ou ajustes finos do front (12 a 14, integração já feita); teste ponta a ponta com o Node físico e `AVALIACAO_LOCAL_SEMPRE` em 0 (15); dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
 | 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
@@ -348,7 +349,7 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 
 ---
 
-## 15. Aprendizados de 08 e 09/10/2026: Backend 2 a 4 e Node físico
+## 15. Aprendizados de 08 a 11/10/2026: Backend 2 a 4, Node físico e dashboard
 
 - **O comando espera a confirmação do Node.** O `PUT /triggers` responde 200 quando o Node confirma pelo `cmdexe`; sem confirmação em 8 s responde 504 (os limites ficam salvos e são reenviados quando o Node voltar). No Wokwi lento ou com a janela escondida isso dá 504; na placa física responde em poucos segundos.
 - **O `device_id` precisa ser único no sistema todo,** não só dentro da vinheria (ver seção 4). O primeiro cadastro numa vinheria nova olha os dispositivos de todas.
@@ -357,3 +358,9 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Os dados do FIWARE sobrevivem ao End Lab** (volumes do Mongo): vinherias, dispositivos, alertas e histórico continuam no dia seguinte. Só o IP muda.
 - **Só um processo do backend por vez:** dois vigias duplicariam os alertas.
 - **O `config.h` de verdade fica fora do GitHub** (tem a senha do Wi-Fi). Não colar prints dele em lugares compartilhados.
+- **O gráfico não liga pontos separados por lacuna.** O histórico só traz pontos reais; o dashboard preenche a grade de tempo com vazios (a linha quebra) e desenha um ponto nas leituras isoladas, senão o gráfico de 7 dias (um ponto por hora) parece vazio. O eixo X tem margem nas pontas para o último ponto não ser cortado.
+- **Wokwi lento gera muitos "Node offline" curtos** (13 s a 4 min) e 504 nos comandos. Manter a janela do Wokwi visível e, só para ele, `ESPERA_COMANDO_SEGUNDOS=20` no `backend/.env`. **Remover para a placa física e o hands-on.**
+- **`.env` do dashboard** (`VITE_USE_MOCK=false`, `VITE_API_URL`, `VITE_MQTT_HOST`) é lido só ao iniciar o `npm run dev`: reiniciar depois de mudar o IP.
+- **Modal:** efeito que depende de função recriada a cada render devolve o foco ao primeiro campo a cada letra. O `Modal` guarda `onFechar` em uma ref.
+- **Alertas antigos ficam abertos** enquanto a condição existir (ex.: temperatura do wgn001 acima do limite por 2 dias). Dispositivo de teste sem Node (ex.: `wgn003`) gera "Node offline" eterno: remover antes da demo.
+- **Vinheria nova:** vencimento é opcional (padrão 90 dias). Dispositivo novo em outra vinheria recebe a apikey dela e o próximo `device_id` livre do sistema.
