@@ -290,12 +290,13 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - Conta DuckDNS criada (`wineguard-cp5.duckdns.org`), **sem uso** a partir de 10/10
 - **Backend 2, 3 e 4** no GitHub, com 176 testes e validados no FIWARE real (09/10): cadastro com apikey, triggers com confirmação do Node, vigia de alertas, vinherias, adegas, suspensão e estabilidade
 - **Node físico `wgn005` na nuvem** (09/10): envia, recebe comandos e grava histórico
+- **Teste ponta a ponta com o Node físico na caixa** (15/10): `wgn005` montado na caixa, `AVALIACAO_LOCAL_SEMPRE` em 0, backend e dashboard no PC contra a nuvem. Validados: telemetria, mute (dashboard e botão), alertas ALTA (LED fixo, bipe longo) e BAIXA (LED pisca, 2 bipes) com OLED, rodízio entre variáveis, alerta fechando ao voltar ao normal, queda e retorno do broker
 - **Dashboard ligado ao backend real e validado** (11/10): painel, comandos (mute e identificar), triggers com confirmação, dispositivos (cadastro, edição, remoção), alertas com filtros, vinherias (nova com vencimento opcional, suspender, reativar), página Suspenso, Início e layout no celular
 
 ### Falta
 - **Dashboard:** enviar ao `frontend/` do GitHub (16/10; `.env` fora do Git, sem `.zip`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
 - **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; basta estar no GitHub e abrir localmente no dia.
-- **Hardware:** teste ponta a ponta com o Node físico, `AVALIACAO_LOCAL_SEMPRE` em 0, montar na caixa 3D (a faculdade imprime), fotos.
+- **Hardware:** fotos da montagem (Node fechado, ligado, caixa aberta) e do esquema de ligação final. Caixa montada e teste ponta a ponta feitos.
 - **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
@@ -304,7 +305,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 |---|---|
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
-| 12 a 18/10 | Folga ou ajustes finos do front (12 a 14, integração já feita); teste ponta a ponta com o Node físico e `AVALIACAO_LOCAL_SEMPRE` em 0 (15); dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
+| 12 a 18/10 | **Feito:** folga (12 a 14) e teste ponta a ponta com o Node na caixa (15). Falta: dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
 | 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
@@ -364,3 +365,13 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Modal:** efeito que depende de função recriada a cada render devolve o foco ao primeiro campo a cada letra. O `Modal` guarda `onFechar` em uma ref.
 - **Alertas antigos ficam abertos** enquanto a condição existir (ex.: temperatura do wgn001 acima do limite por 2 dias). Dispositivo de teste sem Node (ex.: `wgn003`) gera "Node offline" eterno: remover antes da demo.
 - **Vinheria nova:** vencimento é opcional (padrão 90 dias). Dispositivo novo em outra vinheria recebe a apikey dela e o próximo `device_id` livre do sistema.
+
+### 15/10/2026: teste ponta a ponta com o Node na caixa
+- **A IDE trabalhava numa cópia do firmware diferente da do repositório** (e mais antiga, sem o `CLIENT_SUFIXO`). Editar o `config.h` do repositório não mudou o que foi gravado: o Node tentou o IP velho. Daqui em diante: abrir o sketch **direto da pasta do repositório** na IDE, com o `config.h` de bancada lá (ele é ignorado pelo Git). Não copiar o `.ino` da IDE por cima do repositório.
+- **A IDE reformata a indentação** e deixa o `git diff` enorme. Para ver a mudança real: `git --no-pager diff -w --ignore-cr-at-eol <arquivo>`.
+- **Limites e mute ficam na memória do Node (NVS).** Trocar os triggers pelo dashboard muda o que ele guarda, e o mute do botão persiste depois de regravar. Para voltar ao padrão do firmware: Arduino IDE → Tools → Erase All Flash Before Sketch Upload → Enabled, gravar, e voltar para Disabled.
+- **Com `AVALIACAO_LOCAL_SEMPRE 0`** quem decide o alerta é o backend (comandos `alert`). Se o broker cair, depois de 15 s o Node avalia sozinho (OLED "OFFLINE (local)") e mantém LED e som. Ao reconectar, volta a obedecer ao backend, sem intervenção.
+- **Depois de reiniciar o Mosquitto, reiniciar o IoT Agent** (`sudo docker restart fiware-iot-agent`). Sem isso o Node reconecta e envia, mas os dados não chegam ao Orion e o painel continua "offline". Vale para o plano B do dia.
+- **Som do alerta:** ALTA = bipe longo repetido (com `ALTA_CONTINUO 0`), LED fixo; BAIXA = 2 bipes e pausa, LED pisca. Com mais de um alerta, o rodízio fica no mínimo 3 s em cada variável (ouvem-se ~3 bipes longos antes da troca e da pausa de silêncio).
+- **Wi-Fi na caixa:** RSSI entre -70 e -83 dBm (fraco). Ficar de olho; se cair, afastar a antena de fios e metal ou aproximar do roteador.
+- **Hotspot do celular** continua sendo o plano B (2,4 GHz).
