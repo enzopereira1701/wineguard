@@ -59,7 +59,7 @@
 
 // 1 = o Node avalia os limites sozinho, mesmo conectado (enquanto nao ha backend)
 // 0 = so obedece aos comandos "alert" do backend (avalia sozinho apenas se ficar offline)
-#define AVALIACAO_LOCAL_SEMPRE 1
+#define AVALIACAO_LOCAL_SEMPRE 0
 
 // ---------------- Pinos ----------------
 #define PIN_DHT      5    // DHT22 (D5)
