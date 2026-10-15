@@ -167,7 +167,7 @@ O que achamos são recomendações de especialistas, **não uma norma oficial**.
 
 **Dados:** nenhuma tela busca dados direto. Tudo passa por `src/services/api.js`, que usa o simulador (`VITE_USE_MOCK=true`) ou o backend (`VITE_API_URL`). O formato das respostas é o **contrato** em `docs/api-contrato.md`.
 
-**Site de apresentação:** um integrante do grupo faz um site em React à parte para apresentar o problema e a solução. **Não substitui o dashboard** (cadastro, gráficos do STH-Comet e ajuste de triggers são exigidos pelo enunciado). Pode virar a tela Início do mesmo projeto.
+**Site de apresentação (decidido em 15/10): não haverá site separado.** A tela Início do próprio dashboard já apresenta o problema, a solução, as cinco camadas, o modelo de vinherias, os alertas e a equipe. O site em React que o Raphael começou (`RaphaelMascarenhasLima/WineGuard`, com Início e Como funciona prontos e Node, Dashboard e Projeto só com título) fica de lado e **não entra na entrega**. Se o enunciado ou o professor pedirem um portfólio à parte, retomar: o pacote de conteúdo (`portfolio-conteudo.zip`) já tem os textos e as fotos.
 
 Telas:
 1. **Início:** o problema, a solução, o modelo (vinheria, adega, Node) e a equipe.
@@ -295,8 +295,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 
 ### Falta
 - **Dashboard:** enviar ao `frontend/` do GitHub (16/10; `.env` fora do Git, sem `.zip`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
-- **Portfólio (site de apresentação):** o colega constrói a partir do guia e do kit; basta estar no GitHub e abrir localmente no dia.
-- **Hardware:** fotos da montagem (Node fechado, ligado, caixa aberta) e do esquema de ligação final. Caixa montada e teste ponta a ponta feitos.
+- **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
@@ -305,7 +304,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 |---|---|
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
-| 12 a 18/10 | **Feito:** folga (12 a 14) e teste ponta a ponta com o Node na caixa (15). Falta: dashboard no GitHub, fotos do Node e portfólio entregue pelo colega (16); margem (17 e 18) |
+| 12 a 18/10 | **Feito:** folga (12 a 14) e teste ponta a ponta com o Node na caixa (15). Falta: dashboard no GitHub (`frontend/`) (16); **no lab do dia 16, remover `wgn001` (Wokwi) e `wgn003` (Sensor B) pelo dashboard e abrir o sketch da IDE direto da pasta do repositório**; margem (17 e 18). Fotos do Node, componentes e caixa já estão em `hardware/fotos/` |
 | 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
