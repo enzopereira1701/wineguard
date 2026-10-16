@@ -294,7 +294,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Dashboard ligado ao backend real e validado** (11/10): painel, comandos (mute e identificar), triggers com confirmação, dispositivos (cadastro, edição, remoção), alertas com filtros, vinherias (nova com vencimento opcional, suspender, reativar), página Suspenso, Início e layout no celular
 
 ### Falta
-- **Dashboard:** enviar ao `frontend/` do GitHub (16/10; `.env` fora do Git, sem `.zip`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
+- **Dashboard:** já está no GitHub (`frontend/`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
@@ -304,7 +304,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 |---|---|
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
-| 12 a 18/10 | **Feito:** folga (12 a 14) e teste ponta a ponta com o Node na caixa (15). Falta: dashboard no GitHub (`frontend/`) (16); **no lab do dia 16, remover `wgn001` (Wokwi) e `wgn003` (Sensor B) pelo dashboard e abrir o sketch da IDE direto da pasta do repositório**; margem (17 e 18). Fotos do Node, componentes e caixa já estão em `hardware/fotos/` |
+| 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15) e, em 16/10, dashboard no GitHub (`frontend/`), prints em `docs/prints/`, `wgn001` e `wgn003` removidos e sketch aberto da pasta do repositório. Falta: margem (17 e 18) |
 | 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
@@ -374,3 +374,11 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Som do alerta:** ALTA = bipe longo repetido (com `ALTA_CONTINUO 0`), LED fixo; BAIXA = 2 bipes e pausa, LED pisca. Com mais de um alerta, o rodízio fica no mínimo 3 s em cada variável (ouvem-se ~3 bipes longos antes da troca e da pausa de silêncio).
 - **Wi-Fi na caixa:** RSSI entre -70 e -83 dBm (fraco). Ficar de olho; se cair, afastar a antena de fios e metal ou aproximar do roteador.
 - **Hotspot do celular** continua sendo o plano B (2,4 GHz).
+
+### 16/10/2026: dashboard no GitHub e limpeza do lab
+- **Dashboard em `frontend/`** (commit a2df1b6) e prints em `docs/prints/` (55c05fb). O `package.json` do repositório era um placeholder vazio e o `vercel.json` foi removido (sem Vercel).
+- **Ao copiar uma pasta para o repositório, usar `tar` com `--exclude`** (`node_modules`, `.env`, `.git`, `dist`, `*.zip`) e conferir com `git status --short -uall` antes do `git add`. Apareceram duas sobras (uma cópia aninhada do dashboard e um `docs/` duplicado), apagadas antes do commit.
+- **`wgn001` (Wokwi) e `wgn003` (Sensor B) removidos pelo dashboard:** o contador de alertas caiu de 6 para 4 e os "Node offline" deles sumiram. A vinheria ficou só com o Node Bancada (`wgn005`).
+- **Node regravado com a pasta do repositório** (IP do dia 100.30.193.84 confirmado no Serial). O mute antigo persistia (`mu|1`) e foi reativado pelo dashboard.
+- **Wi-Fi:** RSSI de -87 a -93 dBm naquela manhã (pior que os -70 a -83 de 15/10). Se persistir, aproximar o Node do roteador ou usar o hotspot.
+- **Download do navegador falhou** (arquivo de 0 bytes) e um `cp` do Downloads sobrescreveu o `decisoes.md` do repositório com uma versão antiga. Corrigido com `git checkout HEAD~1 -- arquivo`. Conferir `wc -l` e um `grep` antes de commitar um arquivo copiado.
