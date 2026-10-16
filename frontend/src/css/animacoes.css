@@ -1,0 +1,28 @@
+/* Animações usadas no site. Só chamam atenção quando algo acontece. */
+
+/* bolinha "ao vivo" do painel */
+@keyframes pulsar {
+  0%   { box-shadow: 0 0 0 0 rgb(63 107 46 / 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgb(63 107 46 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(63 107 46 / 0); }
+}
+.ao-vivo { animation: pulsar 2s ease-out infinite; }
+
+/* aviso (toast) entrando */
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.entrar { animation: entrar 180ms ease-out; }
+
+/* alerta ativo respirando devagar */
+@keyframes respirar {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.respirar { animation: respirar 1.8s ease-in-out infinite; }
+
+/* respeita quem pediu menos movimento no sistema */
+@media (prefers-reduced-motion: reduce) {
+  .ao-vivo, .entrar, .respirar { animation: none; }
+}

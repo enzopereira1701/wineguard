@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Tokens de design do WineGuard (Tailwind v4: @theme gera as classes).
+   Ex.: --color-bordo  ->  bg-bordo, text-bordo, border-bordo
+        --font-titulo  ->  font-titulo
+   ------------------------------------------------------------------ */
+@theme {
+  --font-titulo: "Playfair Display", Georgia, serif;
+  --font-texto: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-creme: #f4eee6;       /* fundo da página */
+  --color-papel: #fbf8f3;       /* superfícies (cartões, painéis) */
+  --color-linha: #d9cfc1;       /* bordas */
+  --color-bordo: #6b1e2e;       /* marca e botão principal */
+  --color-bordo-escuro: #4a1220;
+  --color-ouro: #b08d4a;        /* só decoração (contraste 2,7:1) */
+  --color-ouro-escuro: #8a6a2f; /* rótulos grandes e detalhes */
+  --color-tinta: #2b1b17;       /* texto principal */
+  --color-suave: #6e5f55;       /* texto secundário */
+
+  /* cores dos dados (iguais no LED, nos gráficos e nos cartões) */
+  --color-temp: #c2452d;
+  --color-umid: #2f6f9f;
+  --color-luz: #5b8a3a;
+
+  /* estados do sistema (o amarelo NÃO é o ouro da marca) */
+  --color-ok: #3f6b2e;
+  --color-atencao: #b7791f;
+  --color-alerta: #9b1c1c;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-texto);
+    color: var(--color-tinta);
+    background: var(--color-creme);
+    -webkit-text-size-adjust: 100%;
+  }
+  body { margin: 0; min-height: 100vh; }
+  h1, h2, h3 { font-family: var(--font-titulo); font-weight: 600; letter-spacing: -0.01em; }
+  /* números alinhados: valores dos sensores não "dançam" */
+  .numero { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "lnum" 1; }
+  /* foco visível para teclado */
+  :focus-visible { outline: 2px solid var(--color-bordo); outline-offset: 2px; }
+  /* sobre o fundo vinho (navbar e rodapé) o contorno precisa ser claro */
+  header :focus-visible, footer :focus-visible { outline-color: var(--color-creme); }
+  ::selection { background: var(--color-bordo); color: var(--color-papel); }
+}
