@@ -1,0 +1,29 @@
+# Serviço do backend WineGuard, acrescentado ao compose do FIWARE na instância.
+#
+# Na instância, o código do projeto fica em ~/wineguard (git clone) e o compose do
+# professor em ~/fiware. Este arquivo é copiado para ~/fiware/docker-compose.override.yml
+# (o Docker Compose junta o override ao docker-compose.yml sozinho, sem editar o do professor):
+#
+#   cp ~/wineguard/fiware/docker-compose.backend.yml ~/fiware/docker-compose.override.yml
+#   cd ~/fiware && sudo docker compose up -d --build wineguard-backend
+#
+# O backend fala com Orion, STH-Comet e IoT Agent pelas portas publicadas no host
+# (1026, 8666 e 4041) usando host.docker.internal; por isso essas portas podem ficar
+# fechadas no Security Group (só o Docker as enxerga). A porta 8000 é a da API.
+# A configuração fica em ~/wineguard/backend/.env (fora do GitHub), com FIWARE_HOST=host.docker.internal.
+
+services:
+  wineguard-backend:
+    build: ../wineguard/backend
+    container_name: wineguard-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../wineguard/backend/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - orion
+      - fiware-sth-comet
+      - iot-agent
