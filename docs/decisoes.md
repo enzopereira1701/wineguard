@@ -291,12 +291,15 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Backend 2, 3 e 4** no GitHub, com 176 testes e validados no FIWARE real (09/10): cadastro com apikey, triggers com confirmação do Node, vigia de alertas, vinherias, adegas, suspensão e estabilidade
 - **Node físico `wgn005` na nuvem** (09/10): envia, recebe comandos e grava histórico
 - **Teste ponta a ponta com o Node físico na caixa** (15/10): `wgn005` montado na caixa, `AVALIACAO_LOCAL_SEMPRE` em 0, backend e dashboard no PC contra a nuvem. Validados: telemetria, mute (dashboard e botão), alertas ALTA (LED fixo, bipe longo) e BAIXA (LED pisca, 2 bipes) com OLED, rodízio entre variáveis, alerta fechando ao voltar ao normal, queda e retorno do broker
+- **Backend na instância (18/10):** contêiner `wineguard-backend` (porta 8000) no compose do FIWARE por um `docker-compose.override.yml`, falando com Orion e STH-Comet por `host.docker.internal`; portas 1026, 4041, 8666 e 27017 fechadas no Security Group (ficam 22, 1883 e 8000); dashboard do repositório (`frontend/`) rodou contra a nuvem
 - **Dashboard ligado ao backend real e validado** (11/10): painel, comandos (mute e identificar), triggers com confirmação, dispositivos (cadastro, edição, remoção), alertas com filtros, vinherias (nova com vencimento opcional, suspender, reativar), página Suspenso, Início e layout no celular
 
 ### Falta
 - **Dashboard:** já está no GitHub (`frontend/`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
+- **Wi-Fi do Node:** sinal fraco em 16/10 (RSSI -87 a -93 dBm). Ver se cai; reposicionar o Node/roteador ou usar o hotspot.
+- **Node:** deixar sem mute (reativado em 16/10; conferir antes dos ensaios).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
-- **Nuvem:** `Dockerfile` e serviço do backend no compose, `git clone` na instância, porta 8000; fechar as portas 1026, 4041 e 8666; ensaio do Start Lab até a demo.
+- **Nuvem:** conferir que o backend volta sozinho depois de um novo Start Lab (20/10); testar com o Node ligado e o IP do dia; ensaio do Start Lab até a demo (22/10).
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
@@ -304,8 +307,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 |---|---|
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
-| 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15) e, em 16/10, dashboard no GitHub (`frontend/`), prints em `docs/prints/`, `wgn001` e `wgn003` removidos e sketch aberto da pasta do repositório. Falta: margem (17 e 18) |
-| 19 a 25/10 | Backend na instância (19); dashboard local contra a nuvem e portas fechadas (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e caixa 3D (23 e 24); ponto de corte em 25/10 |
+| 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
+| 19 a 25/10 | **Falta:** conferir o backend depois de um novo Start Lab (20); folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e celular (23 e 24); ponto de corte em 25/10 |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
@@ -381,4 +384,14 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **`wgn001` (Wokwi) e `wgn003` (Sensor B) removidos pelo dashboard:** o contador de alertas caiu de 6 para 4 e os "Node offline" deles sumiram. A vinheria ficou só com o Node Bancada (`wgn005`).
 - **Node regravado com a pasta do repositório** (IP do dia 100.30.193.84 confirmado no Serial). O mute antigo persistia (`mu|1`) e foi reativado pelo dashboard.
 - **Wi-Fi:** RSSI de -87 a -93 dBm naquela manhã (pior que os -70 a -83 de 15/10). Se persistir, aproximar o Node do roteador ou usar o hotspot.
-- **Download do navegador falhou** (arquivo de 0 bytes) e um `cp` do Downloads sobrescreveu o `decisoes.md` do repositório com uma versão antiga. Corrigido com `git checkout HEAD~1 -- arquivo`. Conferir `wc -l` e um `grep` antes de commitar um arquivo copiado.
+
+### 18/10/2026: backend na instância
+- **Onde fica cada coisa na instância:** o compose do professor está em `~/fiware` (clone do repositório dele, não editado) e o nosso código em `~/wineguard` (`git clone` do GitHub; atualizar com `git pull`). O serviço do backend entra por `~/fiware/docker-compose.override.yml`, copiado de `fiware/docker-compose.backend.yml` do repositório.
+- **Subir ou atualizar:** `cd ~/wineguard && git pull`, depois `cd ~/fiware && sudo docker compose up -d --build wineguard-backend`. Log: `sudo docker logs --tail 20 wineguard-backend`.
+- **Configuração:** `~/wineguard/backend/.env` (fora do GitHub), com `FIWARE_HOST=host.docker.internal`. O backend monta as URLs do Orion, STH-Comet e IoT Agent a partir de um host só, e no Docker cada serviço tem um nome; por isso ele usa as portas publicadas no host pela ponte do Docker (`extra_hosts: host.docker.internal:host-gateway`). Por ser por dentro, as portas podem ficar fechadas no Security Group.
+- **Só um backend por vez:** com o contêiner no ar, não rodar `uvicorn` no PC (dois vigias duplicam os alertas).
+- **O IP do dia não entra na instância:** quem muda de IP é o PC (`frontend/.env`: `VITE_API_URL` e `VITE_MQTT_HOST`) e o Node (`MQTT_BROKER` no `config.h`). O `.env` do backend na instância não muda.
+- **Rotas:** os dispositivos de uma vinheria saem em `/api/vinherias/{id}/dispositivos` (não existe `/api/dispositivos` sozinho); leitura em `/api/dispositivos/{id}/atual`.
+- **Instalação do front:** se o `npm install` for interrompido no Windows, apagar `node_modules` (`rm -rf node_modules`) e instalar de novo sem apertar nada.
+- **O download de `.md` do navegador falhou duas vezes (arquivo de 0 bytes);** arquivos `.zip` funcionam. Mandar documentos num zip.
+- **Mute:** a última leitura do `wgn005` (16/10) ainda mostrava `muted: 1`; conferir e reativar quando o Node voltar a ligar.
