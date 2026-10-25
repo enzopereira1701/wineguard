@@ -291,16 +291,16 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Backend 2, 3 e 4** no GitHub, com 176 testes e validados no FIWARE real (09/10): cadastro com apikey, triggers com confirmação do Node, vigia de alertas, vinherias, adegas, suspensão e estabilidade
 - **Node físico `wgn005` na nuvem** (09/10): envia, recebe comandos e grava histórico
 - **Teste ponta a ponta com o Node físico na caixa** (15/10): `wgn005` montado na caixa, `AVALIACAO_LOCAL_SEMPRE` em 0, backend e dashboard no PC contra a nuvem. Validados: telemetria, mute (dashboard e botão), alertas ALTA (LED fixo, bipe longo) e BAIXA (LED pisca, 2 bipes) com OLED, rodízio entre variáveis, alerta fechando ao voltar ao normal, queda e retorno do broker
+- **Node na nuvem e celular (24/10):** Node regravado com o IP do dia, RSSI de -57 a -75 dBm (repetidor), `setTriggers`, `alert`, `mute` e `identify` validados; limites alterados pelo dashboard com confirmação do Node, alerta fechando e reabrindo; dashboard aberto num celular de verdade pela rede local
 - **Backend volta sozinho após o Start Lab (20/10):** o contêiner subiu com os do FIWARE, a API respondeu do PC no IP novo e o dashboard carregou os dados (que sobrevivem ao End Lab)
 - **Backend na instância (18/10):** contêiner `wineguard-backend` (porta 8000) no compose do FIWARE por um `docker-compose.override.yml`, falando com Orion e STH-Comet por `host.docker.internal`; portas 1026, 4041, 8666 e 27017 fechadas no Security Group (ficam 22, 1883 e 8000); dashboard do repositório (`frontend/`) rodou contra a nuvem
 - **Dashboard ligado ao backend real e validado** (11/10): painel, comandos (mute e identificar), triggers com confirmação, dispositivos (cadastro, edição, remoção), alertas com filtros, vinherias (nova com vencimento opcional, suspender, reativar), página Suspenso, Início e layout no celular
 
 ### Falta
 - **Dashboard:** já está no GitHub (`frontend/`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
-- **Wi-Fi do Node:** sinal fraco em 16/10 (RSSI -87 a -93 dBm). Ver se cai; reposicionar o Node/roteador ou usar o hotspot.
-- **Node:** deixar sem mute (reativado em 16/10; conferir antes dos ensaios).
+- **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
-- **Nuvem:** testar com o Node ligado e o IP do dia; ensaio do Start Lab até a demo (22/10).
+- **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
 - **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
@@ -309,7 +309,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
 | 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
-| 19 a 25/10 | **Feito (20/10):** Start Lab com o backend voltando sozinho e dashboard contra o IP novo. **Falta:** folga (21); Node regravado com o IP do dia e ensaio cronometrado (22); testes na nuvem e celular (23 e 24); ponto de corte em 25/10 |
+| 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. **Falta:** ponto de corte em 25/10 (sem código novo a partir daí) |
 | 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
@@ -400,3 +400,10 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 ### 20/10/2026: Start Lab com o backend já na instância
 - Depois do Start Lab, `sudo docker ps` já mostra o `wineguard-backend` com `Up` (política `restart: unless-stopped`): não precisa subir nada à mão. Os Security Group e os dados também sobrevivem.
 - Rotina da sessão: pegar o IP novo, `curl http://<IP>:8000/api/vinherias` do PC e atualizar `frontend/.env` (`VITE_API_URL` e `VITE_MQTT_HOST`). O Node leva o IP novo no `config.h`.
+
+### 24/10/2026: Node na nuvem, celular e disco da instância
+- **Rotina do dia, testada:** Start Lab, `curl http://<IP>:8000/api/vinherias`, trocar `MQTT_BROKER` no `config.h` (pasta do repositório) e gravar, `frontend/.env` com o IP, `npm run dev`. O Serial deve mostrar o IP novo, `Conectado ao broker MQTT!`, `setTriggers` e `alert` recebidos.
+- **Wi-Fi:** com o repetidor (rede 2,4 GHz com sufixo `_EXT`) o RSSI ficou entre -57 e -75 dBm. O nome da rede vai exatamente igual no `WIFI_SSID` do `config.h`. Na faculdade o Wi-Fi é bom; o hotspot do celular continua sendo o plano B.
+- **Mute pelo botão** fica guardado no Node (`mu|1`) e aparece mudo no painel; reativar com "Reativar som". Não é falha.
+- **Celular de verdade:** `npm run dev -- --host` mostra uma linha `Network: http://192.168.x.x:5173/`; o celular, no mesmo Wi-Fi, abre esse endereço. Para o backend aceitar essa origem, o `CORS_ORIGINS` do `.env` da instância ficou `*` (sem login, é só demonstração); depois de mudar o `.env`: `sudo docker compose up -d --force-recreate wineguard-backend` em `~/fiware`.
+- **Disco da instância (6,7 GB):** estava em 84%. O Docker usa pouco (imagens de 2,2 GB e volumes de 20 MB). O que cresce são os logs dos contêineres em DEBUG: o do IoT Agent chegou a 288 MB. Esvaziado com `sudo sh -c 'truncate -s 0 /var/lib/docker/containers/<id>*/*-json.log'` (sem tocar nos dados); o disco foi para 78%. Não apagar volumes.
