@@ -85,8 +85,6 @@ com confirmação do Node, "Identificar Node", queda e retorno da conexão e sus
 
 Os dados **sobem** (telemetria, histórico, alertas) e os comandos **descem** (limites, alerta, mute, suspend) pelo mesmo caminho.
 
-> O diagrama acima está sendo refeito: a versão publicada ainda cita Vercel e HTTPS. O dashboard **não é publicado** e a API fala em HTTP.
-
 ## Várias vinherias
 
 A plataforma separa os dados de cada cliente com o recurso de *multi-tenancy* do FIWARE:
