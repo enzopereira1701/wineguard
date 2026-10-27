@@ -301,7 +301,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
-- **Documentação:** manuais em PDF, README completo (feito, com partes "em construção"), vídeo, roteiro do pitch e ensaios.
+- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); falta o diagrama de arquitetura (a versão atual cita Vercel e HTTPS), decidir o `docker-compose.yml` vazio da raiz, manuais em PDF, vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
@@ -309,8 +309,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | 7 a 9/10 | **Feito:** Backend 1 a 4 e Node físico na nuvem |
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
 | 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
-| 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. **Falta:** ponto de corte em 25/10 (sem código novo a partir daí) |
-| 26 a 29/10 | README, diagrama, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
+| 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. Ponto de corte em 25/10 (sem código novo a partir daí) |
+| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. **Falta:** diagrama, compose da raiz, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
 **Se apertar, cortar nesta ordem:** PWA; calibração da luz; o backend na instância (ficando com ele no PC); telas de vinherias e suspensão no dashboard (o backend já tem).
@@ -407,3 +407,8 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Mute pelo botão** fica guardado no Node (`mu|1`) e aparece mudo no painel; reativar com "Reativar som". Não é falha.
 - **Celular de verdade:** `npm run dev -- --host` mostra uma linha `Network: http://192.168.x.x:5173/`; o celular, no mesmo Wi-Fi, abre esse endereço. Para o backend aceitar essa origem, o `CORS_ORIGINS` do `.env` da instância ficou `*` (sem login, é só demonstração); depois de mudar o `.env`: `sudo docker compose up -d --force-recreate wineguard-backend` em `~/fiware`.
 - **Disco da instância (6,7 GB):** estava em 84%. O Docker usa pouco (imagens de 2,2 GB e volumes de 20 MB). O que cresce são os logs dos contêineres em DEBUG: o do IoT Agent chegou a 288 MB. Esvaziado com `sudo sh -c 'truncate -s 0 /var/lib/docker/containers/<id>*/*-json.log'` (sem tocar nos dados); o disco foi para 78%. Não apagar volumes.
+
+### 27/10/2026: README e READMEs menores
+- **README da raiz reescrito** com o estado real (tudo pronto e testado), fotos do Node, prints do dashboard, "Como rodar" completo (computador e instância) e limitações atualizadas. READMEs do backend, frontend e firmware atualizados; `backend/.env.example` e `config.example.h` sem menção a DuckDNS e Vercel.
+- **Arquivos `.md` não baixam direito do navegador** (0 bytes); mandar em `.zip`. Antes de commitar um arquivo copiado, conferir `wc -l` e o `git diff --stat`.
+- **Pendentes da documentação:** diagrama `docs/arquitetura.png` (cita Vercel e HTTPS) e o `docker-compose.yml` vazio da raiz (apagar ou preencher com o compose completo; para preencher falta o `mosquitto.conf` da instância).
