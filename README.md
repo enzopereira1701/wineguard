@@ -14,7 +14,7 @@ Projeto do grupo **marcha.dev** para o **CP5 Vinheria Full**. Base: *FIWARE Smar
 ## Sumário
 
 1. [O problema](#o-problema) · 2. [A solução](#a-solução) · 3. [Diferenciais](#diferenciais) · 4. [Status do projeto](#status-do-projeto)
-5. [Demonstração](#demonstração) · 6. [Arquitetura](#arquitetura-em-cinco-camadas) · 7. [Várias vinherias](#várias-vinherias)
+5. [Demonstração](#demonstração) · 6. [Arquitetura](#arquitetura) · 7. [Várias vinherias](#várias-vinherias)
 8. [O Node (hardware)](#o-wineguard-node-hardware) · 9. [Alertas](#como-o-node-avisa) · 10. [Protocolo](#protocolo-mqtt)
 11. [Plataforma FIWARE](#plataforma-fiware) · 12. [Dashboard](#dashboard) · 13. [Referências de guarda](#referências-de-guarda)
 14. [Como rodar](#como-rodar) · 15. [Estrutura do repositório](#estrutura-do-repositório) · 16. [Limitações e evolução](#limitações-e-evolução)
@@ -86,19 +86,29 @@ com confirmação do Node, "Identificar Node", queda e retorno da conexão e sus
 
 ![Painel do dashboard com um alerta ativo](docs/prints/painel-em-alerta_1.png)
 
-## Arquitetura em cinco camadas
+## Arquitetura
 
-![Arquitetura em cinco camadas](docs/arquitetura.png)
+![Arquitetura do WineGuard em três blocos: Application, Back-end e IoT](docs/arquitetura.png)
 
-| Camada | O que tem | Tecnologia |
+O desenho segue a mesma organização do *FIWARE Descomplicado* (Prof. Fábio H. Cabrini): três blocos, com os contêineres, as portas e os protocolos.
+
+| Bloco | O que tem | Como se comunica |
 |---|---|---|
-| 1. Percepção | WineGuard Node: DHT22, LDR, LED RGB, buzzer ativo, OLED e botão de mudo | ESP32, Arduino (FreeRTOS) |
-| 2. Comunicação | Wi-Fi 2,4 GHz e broker MQTT (porta 1883) | MQTT, Mosquitto, protocolo Ultralight 2.0 |
-| 3. Plataforma | IoT Agent, Orion (último valor), STH-Comet (histórico) e MongoDB | FIWARE, Docker, AWS |
-| 4. Aplicação | Avalia os limites a cada 5 s, alertas, vinherias, comandos | FastAPI (Python), em contêiner Docker |
-| 5. Apresentação | Dashboard para computador e celular | React, Vite, Tailwind, Recharts |
+| **Application** | Dashboard (React) e backend WineGuard (FastAPI, em contêiner, porta 8000) | O dashboard fala com o backend por HTTP/REST. O backend consulta o Orion (1026), o IoT Agent (4041) e o STH-Comet (8666) por NGSIv2/REST |
+| **Back-end** | Orion, STH-Comet, IoT Agent MQTT, Mosquitto (1883) e dois MongoDB, em contêineres Docker Compose na AWS | O IoT Agent traduz MQTT (Ultralight 2.0) para NGSIv2 e atualiza o Orion; o Orion avisa o STH-Comet, que guarda o histórico; os dados ficam no MongoDB |
+| **IoT** | WineGuard Node (ESP32 com DHT22, LDR, LED RGB, buzzer, OLED e botão de mudo); um por adega | MQTT pelo Wi-Fi 2,4 GHz, até o Mosquitto (porta 1883) |
 
-Os dados **sobem** (telemetria, histórico, alertas) e os comandos **descem** (limites, alerta, mute, suspend) pelo mesmo caminho.
+Os dados **sobem** (telemetria, histórico, alertas) e os comandos **descem** (limites, alerta, mute, suspend) pelo mesmo caminho. Como a ferramenta do professor, é uma prova de conceito: não inclui login nem criptografia (veja [Limitações e evolução](#limitações-e-evolução)).
+
+Nosso modelo de cinco camadas continua valendo, e cabe nos três blocos:
+
+| Camada | Bloco | Tecnologia |
+|---|---|---|
+| 1. Percepção (sensores e atuadores) | IoT | ESP32, Arduino (FreeRTOS), DHT22, LDR, LED RGB, buzzer, OLED |
+| 2. Comunicação | IoT e Back-end | Wi-Fi 2,4 GHz, MQTT, Mosquitto, Ultralight 2.0 |
+| 3. Plataforma | Back-end | FIWARE (IoT Agent, Orion, STH-Comet, MongoDB), Docker, AWS |
+| 4. Aplicação (regras de negócio) | Application | FastAPI (Python), em contêiner Docker |
+| 5. Apresentação | Application | React, Vite, Tailwind, Recharts |
 
 ## Várias vinherias
 
@@ -301,7 +311,7 @@ wineguard/
 ├── README.md
 ├── backend/                    API FastAPI (app/, tests/, Dockerfile, requirements.txt, .env.example)
 ├── docs/
-│   ├── arquitetura.png         diagrama em cinco camadas
+│   ├── arquitetura.png         diagrama de arquitetura (Application, Back-end e IoT)
 │   ├── decisoes.md             decisões e aprendizados do projeto
 │   ├── referencias.md          referências de guarda
 │   ├── api-contrato.md         formato dos dados entre dashboard e backend
