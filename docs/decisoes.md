@@ -301,8 +301,8 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Dashboard:** já está no GitHub (`frontend/`). Não será publicado. Falta só testar "simular inadimplência" com um Node real ligado e os presets/avisos de Triggers com o Node físico.
 - **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
-- **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
-- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). `docker-compose.yml` vazio da raiz apagado (27/10) e roteiros do vídeo e do hands-on prontos (`docs/roteiro-video.md`, `docs/roteiro-handson.md`). Diferenciais documentados (27/10). Falta gravar o vídeo (link em `video/link.md`) e ensaiar.
+- **Nuvem:** nada pendente de código. Na manhã do hands-on, seguir a rotina da seção 13 (Start Lab até o Node online).
+- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). `docker-compose.yml` vazio da raiz apagado (27/10) e roteiros do vídeo e do hands-on prontos (`docs/roteiro-video.md`, `docs/roteiro-handson.md`). Diferenciais documentados (27/10). Falta gravar o vídeo (link em `video/link.md`).
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
@@ -311,7 +311,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
 | 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
 | 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. Ponto de corte em 25/10 (sem código novo a partir daí) |
-| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. Diagrama (023f04a) e manuais (6eedab7) prontos. Compose da raiz apagado e roteiros prontos. **Falta:** gravar o vídeo, ensaiar e entregar no Forms (29) |
+| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. Diagrama (023f04a) e manuais (6eedab7) prontos. Compose da raiz apagado e roteiros prontos. **Falta:** gravar o vídeo e entregar no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
 **Se apertar, cortar nesta ordem:** PWA; calibração da luz; o backend na instância (ficando com ele no PC); telas de vinherias e suspensão no dashboard (o backend já tem).
@@ -422,3 +422,4 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Hands-on:** apresentação de **uma pessoa**, cerca de 13 minutos (máximo 15), com o PDF `roteiro-apresentador.pdf` (roteiro e guia de estudo). O `docs/roteiro-handson.md` do Git continua na versão com divisão por integrante.
 - Para o hands-on, só citar "Node avalia sozinho sem a nuvem" ao vivo se isso foi testado antes; senão mostrar o vídeo.
 - **Diagrama de arquitetura refeito (27/10, pedido do professor):** `docs/arquitetura.png` agora segue o desenho do *FIWARE Descomplicado*: três blocos (Application, Back-end e IoT), contêineres com as portas (1026, 4041, 8666, 1883 e 27017), legenda de protocolos (NGSIv2/REST, MQTT e MongoDB) e o backend WineGuard e o dashboard no bloco Application. O README explica os três blocos e mostra que as nossas cinco camadas cabem neles. A tela Início do dashboard continua falando em cinco camadas (sem mudança de código).
+- **Ensaios fora do cronograma (27/10):** o apresentador do hands-on é outra pessoa do grupo, que estuda o `roteiro-apresentador.pdf` por conta própria; o ensaio não é tarefa do Enzo.
