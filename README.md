@@ -13,11 +13,12 @@ Projeto do grupo **marcha.dev** para o **CP5 Vinheria Full**. Base: *FIWARE Smar
 
 ## Sumário
 
-1. [O problema](#o-problema) · 2. [A solução](#a-solução) · 3. [Status do projeto](#status-do-projeto) · 4. [Demonstração](#demonstração)
-5. [Arquitetura](#arquitetura-em-cinco-camadas) · 6. [Várias vinherias](#várias-vinherias) · 7. [O Node (hardware)](#o-wineguard-node-hardware)
-8. [Alertas](#como-o-node-avisa) · 9. [Protocolo](#protocolo-mqtt) · 10. [Plataforma FIWARE](#plataforma-fiware) · 11. [Dashboard](#dashboard)
-12. [Referências de guarda](#referências-de-guarda) · 13. [Como rodar](#como-rodar) · 14. [Estrutura do repositório](#estrutura-do-repositório)
-15. [Limitações e evolução](#limitações-e-evolução) · 16. [Créditos](#créditos) · 17. [Equipe](#equipe)
+1. [O problema](#o-problema) · 2. [A solução](#a-solução) · 3. [Diferenciais](#diferenciais) · 4. [Status do projeto](#status-do-projeto)
+5. [Demonstração](#demonstração) · 6. [Arquitetura](#arquitetura-em-cinco-camadas) · 7. [Várias vinherias](#várias-vinherias)
+8. [O Node (hardware)](#o-wineguard-node-hardware) · 9. [Alertas](#como-o-node-avisa) · 10. [Protocolo](#protocolo-mqtt)
+11. [Plataforma FIWARE](#plataforma-fiware) · 12. [Dashboard](#dashboard) · 13. [Referências de guarda](#referências-de-guarda)
+14. [Como rodar](#como-rodar) · 15. [Estrutura do repositório](#estrutura-do-repositório) · 16. [Limitações e evolução](#limitações-e-evolução)
+17. [Créditos](#créditos) · 18. [Equipe](#equipe)
 
 ## O problema
 
@@ -40,6 +41,18 @@ Uma adega comum não avisa ninguém quando isso acontece, e a pessoa só descobr
 
 Se a nuvem cair, o Node **continua alertando** sozinho, com os limites guardados na memória.
 
+## Diferenciais
+
+O que o WineGuard faz além de medir e mostrar (a lista completa, com onde ver e como provar cada ponto, está em [`docs/diferenciais.md`](docs/diferenciais.md)):
+
+1. **Alerta em três canais, com significado:** a cor do LED diz a variável, o som diz o sentido (acima ou abaixo) e a tela mostra o valor e o limite.
+2. **Continua protegendo sem a nuvem:** depois de 15 s sem conexão, o Node avalia os limites sozinho.
+3. **Várias vinherias isoladas, com suspensão por inadimplência:** os dados não se misturam e o histórico é preservado.
+4. **Referências de guarda com fontes e avisos:** presets de guarda (não de servir) e um painel que avisa quando os valores não fazem sentido.
+5. **Alerta de estabilidade:** avisa quando a temperatura varia mais de 2 °C em 24 h, mesmo dentro da faixa.
+
+De apoio: ajuste remoto dos limites com confirmação do Node, calibração da luz, cadastro e identificação de Nodes pelo painel, backend em contêiner que volta sozinho com 176 testes, Node físico em caixa 3D testado na nuvem e documentação completa, com as limitações assumidas.
+
 ## Status do projeto
 
 Atualizado em 27/10/2026. Este README descreve o que existe e foi testado; o que falta está marcado.
@@ -51,7 +64,8 @@ Atualizado em 27/10/2026. Este README descreve o que existe e foi testado; o que
 | Cadastro de dispositivo (`provisionar.sh` e pelo dashboard) | **Pronto** |
 | Backend (FastAPI) | **Pronto**, rodando em contêiner na instância (porta 8000), com 176 testes automáticos |
 | Dashboard (front-end) | **Pronto**, ligado ao backend real e testado no computador e no celular |
-| Manuais em PDF e vídeo | **A fazer** |
+| Manuais de instalação e de operação | **Prontos** ([instalação](docs/manual-instalacao.md) e [operação](docs/manual-operacao.md)) |
+| Vídeo | **A fazer** |
 
 Provado de ponta a ponta com o Node físico: telemetria, histórico, alertas ALTA e BAIXA, mute (botão e dashboard), troca de limites
 com confirmação do Node, "Identificar Node", queda e retorno da conexão e suspensão de vinheria.
@@ -61,6 +75,7 @@ com confirmação do Node, "Identificar Node", queda e retorno da conexão e sus
 - **Simulação no Wokwi:** https://wokwi.com/projects/476972184977904641
 - **Dashboard:** não é publicado. Roda no computador do grupo (`npm run dev`) e é aberto na apresentação, ligado ao backend na nuvem.
 - **Vídeo:** _(em breve, veja `video/link.md`)_
+- **Diferenciais:** [`docs/diferenciais.md`](docs/diferenciais.md)
 
 <p align="center">
   <img src="hardware/fotos/node/montado-frente.jpg" alt="WineGuard Node montado na caixa" width="300">
@@ -290,8 +305,11 @@ wineguard/
 │   ├── decisoes.md             decisões e aprendizados do projeto
 │   ├── referencias.md          referências de guarda
 │   ├── api-contrato.md         formato dos dados entre dashboard e backend
-│   ├── manual-instalacao.md    (em construção; o PDF sai na entrega)
-│   ├── manual-operacao.md      (em construção; o PDF sai na entrega)
+│   ├── diferenciais.md         o que o WineGuard faz além do básico, com como provar
+│   ├── manual-instalacao.md    montar e instalar do zero
+│   ├── manual-operacao.md      usar e manter o sistema
+│   ├── roteiro-video.md        roteiro do vídeo
+│   ├── roteiro-handson.md      roteiro do hands-on
 │   ├── prints/                 telas do dashboard
 │   └── imagens/                emblema e imagens do README
 ├── fiware/

@@ -1,6 +1,6 @@
 # Roteiro do vídeo: WineGuard
 
-**Duração alvo:** 4 a 5 minutos. **Formato:** gravação de tela do dashboard + imagens do Node, com narração. Sem enrolação: cada bloco tem um objetivo e um tempo.
+**Duração alvo:** cerca de 5 minutos. **Formato:** gravação de tela do dashboard + imagens do Node, com narração. Sem enrolação: cada bloco tem um objetivo e um tempo.
 
 ## Antes de gravar (checklist)
 
@@ -13,17 +13,20 @@
 
 ## Roteiro
 
+Cada vez que um **diferencial** aparece, entra na tela uma etiqueta "Diferencial" com o nome dele (lista completa em [`diferenciais.md`](diferenciais.md)).
+
 | Tempo | Imagem | Fala (sugestão) |
 |---|---|---|
-| 0:00 a 0:20 | Logo e foto do Node na caixa | "Somos o grupo marcha.dev e este é o WineGuard: monitoramento de adegas com IoT. Cada adega ganha um Node que mede o ambiente e avisa quando o vinho está em risco." |
-| 0:20 a 0:50 | Foto da adega ou do Node + arquitetura (`docs/arquitetura.png`) | "Vinho estraga com temperatura alta, umidade fora da faixa e luz. Em uma adega pequena ninguém acompanha isso o dia todo. Nossa solução: um ESP32 com sensor de temperatura e umidade (DHT22), sensor de luz (LDR), OLED, LED RGB e buzzer, que envia os dados por MQTT para uma plataforma FIWARE na AWS." |
-| 0:50 a 1:30 | Diagrama de arquitetura, apontando camada por camada | "O Node publica por MQTT. O IoT Agent converte para NGSI e o Orion guarda o estado atual. O STH-Comet guarda o histórico. Nosso backend em FastAPI, rodando em contêiner na mesma instância, consulta o FIWARE, avalia os limites a cada 5 segundos e registra os alertas. O dashboard em React consome essa API." |
-| 1:30 a 2:00 | Foto do Node de perto (OLED, LED, botão) | "No Node, a tela mostra temperatura, umidade e luminosidade. O LED RGB indica qual variável saiu do limite: vermelho, azul ou verde. O buzzer indica o sentido: um bipe longo para acima do limite, dois bipes curtos para abaixo. Um botão silencia o alarme." |
-| 2:00 a 2:30 | Painel do dashboard com o Node online | "No Painel vemos o Node online, as leituras ao vivo, a estabilidade da temperatura nas últimas 24 horas e os gráficos de 1 hora, 24 horas ou 7 dias." |
-| 2:30 a 3:30 | **Demo ao vivo**: aquecer o sensor (mão ou secador) ou baixar o limite em Triggers | "Vou provocar um alerta. Em Triggers escolho uma referência de guarda, como Guarda geral, ou digito os limites e clico em Salvar e enviar ao Node. O painel confirma que o Node recebeu. Agora o Node sai da faixa: o LED acende, o buzzer toca e o alerta aparece no painel e em Alertas, com início, tipo e dispositivo. Quando a leitura volta ao normal, o alerta fecha sozinho." |
-| 3:30 a 4:00 | Telas Dispositivos e Vinherias | "Em Dispositivos cadastramos um Node novo: o painel mostra o bloco do `config.h`. Em Vinherias temos várias adegas com dados separados e a suspensão por inadimplência: o Node para de alertar e a API recusa consultas daquela vinheria." |
-| 4:00 a 4:30 | Node + terminal ou painel | "Se a nuvem cair, o Node avalia os limites sozinho depois de 15 segundos e continua alertando. Quando a conexão volta, ele volta a obedecer ao sistema." |
-| 4:30 a 5:00 | Tela de créditos ou README | "O código, os manuais de instalação e operação e a documentação estão no GitHub. O backend tem 176 testes automatizados. Este projeto usa o material FIWARE Descomplicado do professor Fábio Cabrini e foi feito com apoio de IA. Obrigado." |
+| 0:00 a 0:15 | Logo e foto do Node na caixa | "Somos o grupo marcha.dev, e este é o WineGuard: monitoramento de adegas com IoT. Cada adega ganha um Node que mede o ambiente e avisa quando o vinho está em risco." |
+| 0:15 a 0:35 | Animação do problema (temperatura, umidade e luz) | "O vinho estraga quando a temperatura sobe demais, a umidade sai da faixa ou a luz bate na garrafa. Em uma adega pequena, ninguém acompanha isso o dia todo. O WineGuard faz esse acompanhamento, vinte e quatro horas por dia." |
+| 0:35 a 1:05 | Diagrama de arquitetura animado, camada por camada | "O Node, um ESP32, publica as leituras por MQTT. O IoT Agent converte os dados e o Orion guarda o estado atual. O STH-Comet guarda o histórico. Nosso backend em FastAPI, em contêiner na mesma instância da AWS, consulta o FIWARE, avalia os limites a cada cinco segundos e registra os alertas. E o dashboard em React mostra tudo isso." |
+| 1:05 a 1:35 | Node de perto (OLED, LED, botão) · **Diferencial: alerta em três canais** | "No Node, a tela OLED mostra temperatura, umidade e luminosidade. O LED RGB indica qual variável saiu do limite: vermelho para temperatura, azul para umidade e verde para luz. O buzzer indica o sentido: um bipe longo para acima do limite, dois bipes curtos para abaixo. Esse é o nosso primeiro diferencial: três canais, cada um com um significado. E um botão silencia o alarme." |
+| 1:35 a 2:00 | Painel com o Node online · **Diferencial: alerta de estabilidade** | "No Painel, vemos o Node online, as leituras ao vivo e os gráficos de uma hora, vinte e quatro horas ou sete dias. Também vemos a estabilidade da temperatura: o sistema alerta quando ela varia mais de dois graus em vinte e quatro horas, mesmo dentro da faixa, porque o que mais prejudica o vinho é a temperatura que sobe e desce." |
+| 2:00 a 3:00 | **Demo ao vivo**: Triggers, Node alertando, Alertas · **Diferenciais: referências de guarda e ajuste com confirmação** | "Vou provocar um alerta. Em Triggers, escolho uma referência de guarda, com fontes citadas e avisos quando um valor não faz sentido, e clico em Salvar e enviar ao Node. O painel confirma que o Node recebeu. Agora o valor passa do limite: o LED acende, o buzzer toca e o alerta aparece no painel. Em Alertas, ele fica registrado, com início, tipo e dispositivo. Quando a leitura volta ao normal, o alerta fecha sozinho." |
+| 3:00 a 3:30 | Telas Dispositivos e Vinherias · **Diferencial: várias vinherias isoladas** | "Em Dispositivos, cadastramos um Node novo, e o painel gera o bloco de configuração para o firmware. Em Vinherias, cada adega tem os seus dados separados. Se a assinatura vence, a vinheria é suspensa: os Nodes param de alertar e a API recusa consultas, mas o histórico fica guardado." |
+| 3:30 a 3:45 | Node em modo local (ou animação) · **Diferencial: continua protegendo sem a nuvem** | "Se a nuvem cair, o Node não fica cego: depois de quinze segundos, ele avalia os limites sozinho e continua alertando. Quando a conexão volta, ele volta a obedecer ao sistema." |
+| 3:45 a 4:20 | Lista animada dos cinco diferenciais | "Para resumir, são cinco diferenciais: o alerta em três canais, com a cor indicando a variável e o som indicando o sentido; o Node que continua protegendo sem a nuvem; várias vinherias isoladas, com suspensão por inadimplência; referências de guarda com fontes e avisos ao digitar; e o alerta de estabilidade, que olha a variação das últimas vinte e quatro horas. Todos estão descritos, com a forma de provar cada um, na página de diferenciais do repositório." |
+| 4:20 a 4:50 | GitHub: README e pasta `docs` | "Todo o código, os manuais de instalação e de operação e a documentação estão no GitHub. O backend tem cento e setenta e seis testes automatizados. Usamos como base o material FIWARE Descomplicado, do professor Fábio Cabrini, e contamos com apoio de IA. Obrigado." |
 
 ## Dicas de gravação
 

@@ -211,6 +211,7 @@ Telas:
 - **README (GitHub):** emblema, problema e solução, prints e foto do Node, arquitetura em camadas (percepção, comunicação, plataforma, aplicação, apresentação), modelo de vinherias, hardware, protocolo, referências de guarda, como rodar, estrutura do repositório, **limitações e evolução**, créditos (FIWARE Descomplicado do prof. Fábio Cabrini, uso de IA) e equipe.
 - **Manuais (decidido em 27/10, o professor quer impresso):** **dois** documentos, `docs/manual-instalacao.md` (6 páginas em PDF) e `docs/manual-operacao.md` (7 páginas), com o mesmo conteúdo em Markdown (Git) e em PDF A4 (impressão). Têm capa, esquema de ligação, fotos do Node, prints do dashboard, tabelas de problemas e rodapé com página. Os PDFs ficam fora do Git (gerados a partir do `.md`).
 - A fonte dos manuais fica em Markdown em `docs/`; o PDF é gerado a partir dela (Chromium/Playwright).
+- **Diferenciais (decidido em 27/10):** `docs/diferenciais.md` lista os diferenciais com onde ver e como provar, e o README tem a seção "Diferenciais" logo depois de "A solução". Os **cinco principais** são: (1) alerta em três canais com significado, (2) Node que continua protegendo sem a nuvem, (3) várias vinherias isoladas com suspensão, (4) referências de guarda com fontes e avisos, (5) alerta de estabilidade. De apoio: ajuste remoto com confirmação, calibração da luz, cadastro e identificação pelo painel, operação robusta (contêiner, 176 testes), hardware completo e testado, documentação e transparência. Só entra o que está pronto e testado.
 - Outros: `docs/arquitetura.png`, `docs/referencias.md`, `hardware/firmware/README.md`, `hardware/lista-de-materiais.md`, `hardware/esquema-ligacao.png`.
 - Entrega no Forms: link do GitHub com o `.ino`, nomes, descrição, arquitetura, manuais, código do dashboard comentado com `requirements.txt`, link do Wokwi (LDR e DHT22) e o vídeo.
 
@@ -301,7 +302,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
-- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). `docker-compose.yml` vazio da raiz apagado (27/10) e roteiros do vídeo e do hands-on prontos (`docs/roteiro-video.md`, `docs/roteiro-handson.md`). Falta gravar o vídeo (link em `video/link.md`) e ensaiar.
+- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). `docker-compose.yml` vazio da raiz apagado (27/10) e roteiros do vídeo e do hands-on prontos (`docs/roteiro-video.md`, `docs/roteiro-handson.md`). Diferenciais documentados (27/10). Falta gravar o vídeo (link em `video/link.md`) e ensaiar.
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
@@ -414,3 +415,9 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **Diagrama** `docs/arquitetura.png` refeito sem Vercel e HTTPS (023f04a). **Manuais** de instalação e operação publicados (6eedab7); PDFs enviados ao usuário para imprimir.
 - **`docker-compose.yml` vazio da raiz apagado:** a instalação usa o compose do professor (`~/fiware`) mais o nosso override `fiware/docker-compose.backend.yml`, como explica o README.
 - **Roteiros:** `docs/roteiro-video.md` (4 a 5 min) e `docs/roteiro-handson.md` (apresentação de 12 min, no máximo 15, feita por **uma pessoa**). O PDF `roteiro-apresentador.pdf` foi gerado só para estudo e não vai para o Git.
+
+### 27/10/2026 (tarde): diferenciais, vídeo e apresentação
+- **Diferenciais** em `docs/diferenciais.md` e no README (ver seção 9). O vídeo passa a ter um bloco só deles (lista animada) e uma etiqueta "Diferencial" sempre que um aparece; o roteiro do vídeo ficou em cerca de 5 minutos.
+- **Vídeo:** o grupo grava clipes sem fala (C01 a C10) e a narração em áudio separado (N01 a N10), e a edição em estilo motion é feita à parte seguindo o `guia-gravacao.pdf`. O guia e o PDF do apresentador não vão para o Git.
+- **Hands-on:** apresentação de **uma pessoa**, cerca de 13 minutos (máximo 15), com o PDF `roteiro-apresentador.pdf` (roteiro e guia de estudo). O `docs/roteiro-handson.md` do Git continua na versão com divisão por integrante.
+- Para o hands-on, só citar "Node avalia sozinho sem a nuvem" ao vivo se isso foi testado antes; senão mostrar o vídeo.
