@@ -42,25 +42,34 @@ Se a nuvem cair, o Node **continua alertando** sozinho, com os limites guardados
 
 ## Status do projeto
 
-Atualizado em 06/10/2026. Este README descreve só o que existe; o que ainda está em construção está marcado.
+Atualizado em 27/10/2026. Este README descreve o que existe e foi testado; o que falta está marcado.
 
 | Parte | Estado |
 |---|---|
-| Node: hardware e firmware 2.3 | **Pronto e testado na bancada** (sem nuvem) e no Wokwi |
-| Plataforma FIWARE na AWS | **Provada**: dados e histórico chegam; o comando `mute` chega ao Node (testado com o Wokwi) |
-| Cadastro de dispositivo (`provisionar.sh`) | **Pronto** |
-| Dashboard (front-end) | **Rodando com dados de demonstração**. Falta ligar ao backend e publicar na Vercel |
-| Backend (FastAPI) | **Em construção** |
-| Docker Compose, DuckDNS e HTTPS | **Em construção** |
-| Caixa 3D | Modelada; **impressão em andamento** |
-| Manuais em PDF, vídeo | **A fazer** |
+| Node: hardware, firmware 2.3 e caixa impressa em 3D | **Pronto e testado** na bancada, na nuvem e no Wokwi |
+| Plataforma FIWARE na AWS | **Pronta**: dados e histórico chegam, comandos chegam ao Node |
+| Cadastro de dispositivo (`provisionar.sh` e pelo dashboard) | **Pronto** |
+| Backend (FastAPI) | **Pronto**, rodando em contêiner na instância (porta 8000), com 176 testes automáticos |
+| Dashboard (front-end) | **Pronto**, ligado ao backend real e testado no computador e no celular |
+| Manuais em PDF e vídeo | **A fazer** |
+
+Provado de ponta a ponta com o Node físico: telemetria, histórico, alertas ALTA e BAIXA, mute (botão e dashboard), troca de limites
+com confirmação do Node, "Identificar Node", queda e retorno da conexão e suspensão de vinheria.
 
 ## Demonstração
 
 - **Simulação no Wokwi:** https://wokwi.com/projects/476972184977904641
-- **Dashboard publicado:** _(em breve)_
+- **Dashboard:** não é publicado. Roda no computador do grupo (`npm run dev`) e é aberto na apresentação, ligado ao backend na nuvem.
 - **Vídeo:** _(em breve, veja `video/link.md`)_
-- **Fotos do Node montado:** _(em breve)_
+
+<p align="center">
+  <img src="hardware/fotos/node/montado-frente.jpg" alt="WineGuard Node montado na caixa" width="300">
+  &nbsp;
+  <img src="hardware/fotos/node/alerta-temperatura-alta.jpg" alt="Alerta de temperatura alta: LED vermelho e tela" width="300">
+</p>
+<p align="center"><em>O Node montado na caixa em 3D e um alerta de temperatura ALTA (LED vermelho fixo e tela). Mais fotos em <a href="hardware/fotos/README.md"><code>hardware/fotos/</code></a>.</em></p>
+
+![Painel do dashboard com um alerta ativo](docs/prints/painel-em-alerta_1.png)
 
 ## Arquitetura em cinco camadas
 
@@ -71,10 +80,12 @@ Atualizado em 06/10/2026. Este README descreve só o que existe; o que ainda est
 | 1. Percepção | WineGuard Node: DHT22, LDR, LED RGB, buzzer ativo, OLED e botão de mudo | ESP32, Arduino (FreeRTOS) |
 | 2. Comunicação | Wi-Fi 2,4 GHz e broker MQTT (porta 1883) | MQTT, Mosquitto, protocolo Ultralight 2.0 |
 | 3. Plataforma | IoT Agent, Orion (último valor), STH-Comet (histórico) e MongoDB | FIWARE, Docker, AWS |
-| 4. Aplicação | Avalia os limites a cada 5 s, alertas, vinherias, comandos | FastAPI (Python) |
-| 5. Apresentação | Dashboard para computador e celular | React, Vite, Tailwind, Recharts, Vercel |
+| 4. Aplicação | Avalia os limites a cada 5 s, alertas, vinherias, comandos | FastAPI (Python), em contêiner Docker |
+| 5. Apresentação | Dashboard para computador e celular | React, Vite, Tailwind, Recharts |
 
 Os dados **sobem** (telemetria, histórico, alertas) e os comandos **descem** (limites, alerta, mute, suspend) pelo mesmo caminho.
+
+> O diagrama acima está sendo refeito: a versão publicada ainda cita Vercel e HTTPS. O dashboard **não é publicado** e a API fala em HTTP.
 
 ## Várias vinherias
 
@@ -143,11 +154,16 @@ No Orion, os atributos viram `temperature`, `humidity`, `luminosity`, `state`, `
 ## Plataforma FIWARE
 
 Roda em Docker numa instância da AWS (Learner Lab) e usa a base do professor: Mosquitto, IoT Agent (Ultralight), Orion, STH-Comet e dois MongoDB.
+O **backend** entra como mais um contêiner (`wineguard-backend`, porta 8000) no mesmo Compose, por um arquivo de override (veja [Como rodar](#6-na-instância-aws-backend-em-contêiner)).
+O backend fala com Orion, STH-Comet e IoT Agent por dentro do Docker; por isso só ficam abertas ao mundo as portas **22** (SSH), **1883** (o Node) e **8000** (a API).
+
 O script [`fiware/scripts/provisionar.sh`](fiware/scripts/provisionar.sh) cadastra uma vinheria (*service*), o dispositivo e a assinatura que
-manda o histórico para o STH-Comet.
+manda o histórico para o STH-Comet. No dia a dia o cadastro é feito pelo dashboard, que chama o backend.
 
 > **Lição aprendida:** o dispositivo precisa ser cadastrado **com a `apikey`**. Sem ela, o IoT Agent não reconhece o cadastro, cria um
-> dispositivo novo sozinho (sem o mapeamento `t` para `temperature`) e as leituras vão para a entidade errada. O script já faz certo.
+> dispositivo novo sozinho (sem o mapeamento `t` para `temperature`) e as leituras vão para a entidade errada. O script e o backend já fazem certo.
+
+> **Lição aprendida:** depois de reiniciar o Mosquitto, é preciso reiniciar também o IoT Agent; sem isso o Node reconecta, mas os dados não chegam ao Orion.
 
 ## Dashboard
 
@@ -156,15 +172,23 @@ Front-end em React (Vite, React Router, Tailwind e Recharts), para computador e 
 | Tela | O que faz |
 |---|---|
 | Início | O problema, a solução e a equipe |
-| Painel | Um dispositivo por vez, com os outros em chips. Valores de agora, 4 gráficos (temperatura, umidade, luz e combinado), estabilidade de 24 h, atualização a cada 5 s |
+| Painel | Um dispositivo por vez, com os outros em chips. Valores de agora, 4 gráficos (temperatura, umidade, luz e combinado), estabilidade de 24 h, atualização a cada 5 s. Silenciar o buzzer e "Identificar Node" |
 | Dispositivos | Cadastrar, editar e remover; mostra o bloco de configuração (`config.h`) do Node |
-| Triggers | Limites por preset de guarda ou personalizados, avisos quando fogem da referência, calibração da luz |
+| Triggers | Limites por preset de guarda ou personalizados, avisos quando fogem da referência, calibração da luz. Ao salvar, o limite vai ao Node e o painel mostra quando ele confirmou |
 | Alertas | Histórico com início, fim e duração, e filtros |
 | Vinherias | Cadastro, vencimento, suspender e reativar |
 | Suspenso | Aviso quando a vinheria está suspensa |
 
-O formato dos dados entre o dashboard e o backend está definido em [`docs/api-contrato.md`](docs/api-contrato.md).
-Enquanto o backend não existe, o dashboard usa **dados de demonstração** gerados no navegador, com um simulador de sensores.
+| Painel | Triggers |
+|---|---|
+| ![Painel](docs/prints/painel-em-alerta_2.png) | ![Triggers](docs/prints/triggers_1.png) |
+
+| Alertas | Dispositivos | Vinherias |
+|---|---|---|
+| ![Alertas](docs/prints/alertas.png) | ![Dispositivos](docs/prints/dispositivos.png) | ![Vinherias](docs/prints/vinherias.png) |
+
+Toda comunicação passa por uma camada única (`frontend/src/services/api.js`). O formato dos dados entre o dashboard e o backend está definido em
+[`docs/api-contrato.md`](docs/api-contrato.md). Para desenvolver sem backend, `VITE_USE_MOCK=true` liga **dados de demonstração** gerados no navegador.
 
 ## Referências de guarda
 
@@ -200,55 +224,86 @@ Sem a nuvem, o Node funciona sozinho: lê os sensores e avisa com os limites do 
 Com a base FIWARE do professor rodando na máquina (Mosquitto, IoT Agent, Orion e STH-Comet), dentro dela:
 
 ```bash
-bash fiware/scripts/provisionar.sh vin_demo /adega1 winedemo 001
+bash fiware/scripts/provisionar.sh vin_demo /adega1 winedemo 005
 ```
 
 Conferir se os dados chegam (troque `localhost` pelo endereço da máquina, se for de fora):
 
 ```bash
-curl -s "http://localhost:1026/v2/entities/urn:ngsi-ld:WineGuardNode:001?type=WineGuardNode" \
+curl -s "http://localhost:1026/v2/entities/urn:ngsi-ld:WineGuardNode:005?type=WineGuardNode" \
   -H "fiware-service: vin_demo" -H "fiware-servicepath: /adega1"
 ```
 
-No `config.h` do Node, use a mesma `API_KEY` (`winedemo`) e o `DEVICE_ID` (`wgn001`), e em `MQTT_BROKER` o endereço da máquina.
-O IP da instância do Learner Lab **muda a cada sessão**.
+No `config.h` do Node, use a mesma `API_KEY` (`winedemo`) e o `DEVICE_ID` (`wgn005`), e em `MQTT_BROKER` o endereço da máquina.
+O IP da instância do Learner Lab **muda a cada sessão**: troque o `MQTT_BROKER` e grave o Node de novo.
 
-### 4. Dashboard
+### 4. Backend (no seu computador)
 
-_(em construção: o código entra em `frontend/`)_ A instalação será:
+Na pasta `backend`, no Git Bash (Windows):
+
+```bash
+py -m venv .venv                      # cria o ambiente virtual (uma vez)
+source .venv/Scripts/activate         # ativa (aparece "(.venv)" no começo da linha)
+pip install -r requirements.txt       # instala as bibliotecas (uma vez)
+cp .env.example .env                  # e edite o .env (FIWARE_HOST = IP da instância)
+uvicorn app.main:app --reload         # sobe a API em http://127.0.0.1:8000
+```
+
+Documentação interativa em <http://127.0.0.1:8000/docs>. Testes: `python -m unittest discover -s tests -v`. Detalhes das rotas em [`backend/README.md`](backend/README.md).
+Rode **um backend só** por vez (dois vigias duplicam os alertas): se o contêiner da instância estiver no ar, não suba outro no computador.
+
+### 5. Dashboard
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env
+cp .env.example .env      # no Windows: copie o arquivo e renomeie para .env
 npm run dev
 ```
 
-### 5. Backend
+No `.env`, `VITE_API_URL` é o endereço do backend (`http://localhost:8000` ou `http://<IP da instância>:8000`) e `VITE_MQTT_HOST` é o IP da instância
+(aparece no bloco de configuração do Node). Abra o endereço que o terminal mostrar (normalmente http://localhost:5173). Para abrir no celular, no mesmo
+Wi-Fi: `npm run dev -- --host` e use o endereço `Network:`.
 
-_(em construção)_
+### 6. Na instância (AWS): backend em contêiner
+
+1. Base FIWARE do professor em `~/fiware` (`sudo docker compose up -d`).
+2. `git clone` deste repositório em `~/wineguard` e crie `~/wineguard/backend/.env` (modelo em `backend/.env.example`), com `FIWARE_HOST=host.docker.internal`.
+3. Copie o serviço do backend e suba:
+
+```bash
+cp ~/wineguard/fiware/docker-compose.backend.yml ~/fiware/docker-compose.override.yml
+cd ~/fiware && sudo docker compose up -d --build wineguard-backend
+```
+
+4. No Security Group da instância, deixe abertas só as portas **22**, **1883** e **8000**.
+5. Teste do seu computador: `curl http://<IP da instância>:8000/api/vinherias`.
+
+O contêiner tem `restart: unless-stopped`: depois de um novo *Start Lab* ele volta sozinho. Para atualizar o código: `git pull` em `~/wineguard` e repita o `up -d --build`.
 
 ## Estrutura do repositório
 
 ```
 wineguard/
 ├── README.md
-├── docker-compose.yml          (em construção)
-├── .env.example                (em construção)
-├── backend/                    (em construção) FastAPI e requirements.txt
+├── backend/                    API FastAPI (app/, tests/, Dockerfile, requirements.txt, .env.example)
 ├── docs/
 │   ├── arquitetura.png         diagrama em cinco camadas
-│   ├── decisoes.md             decisões do projeto
+│   ├── decisoes.md             decisões e aprendizados do projeto
 │   ├── referencias.md          referências de guarda
 │   ├── api-contrato.md         formato dos dados entre dashboard e backend
-│   ├── manual-instalacao.md    (em construção)
-│   ├── manual-operacao.md      (em construção)
+│   ├── manual-instalacao.md    (em construção; o PDF sai na entrega)
+│   ├── manual-operacao.md      (em construção; o PDF sai na entrega)
+│   ├── prints/                 telas do dashboard
 │   └── imagens/                emblema e imagens do README
-├── fiware/scripts/provisionar.sh
-├── frontend/                   dashboard React (o código entra aqui)
+├── fiware/
+│   ├── scripts/provisionar.sh
+│   └── docker-compose.backend.yml   serviço do backend (override do compose do FIWARE)
+├── frontend/                   dashboard React (Vite)
 ├── hardware/
 │   ├── esquema-ligacao.md, esquema-ligacao.png
 │   ├── lista-de-materiais.md
+│   ├── fotos/                  Node montado, componentes e caixa
 │   └── firmware/wineguard_node/   .ino, icones.h e config.example.h
 ├── simulacao/                  Wokwi (diagram.json, libraries.txt, wokwi.md)
 └── video/link.md
@@ -266,7 +321,8 @@ Limitações conhecidas desta versão (é uma prova de conceito):
 - O **buzzer diferencia o sentido** (alta ou baixa), mas **não a variável**: ela é identificada pela cor do LED e pela tela. Quem não enxerga o LED nem
   a tela não distingue a variável pelo som.
 - O IoT Agent **recria** dispositivos apagados enquanto o ESP32 continuar publicando.
-- O IP da máquina do Learner Lab muda a cada sessão (mitigado com DuckDNS).
+- O IP da máquina do Learner Lab muda a cada sessão; ele é trocado à mão no `config.h` do Node e no `.env` do dashboard.
+- A API aceita chamadas de **qualquer origem** (CORS liberado) e o dashboard não é publicado: é uma demonstração, sem login.
 - As referências de guarda são recomendações, não uma norma.
 
 Evolução prevista: login por usuário e perfis, banco relacional, MQTT com TLS, cancelamento de vinheria com carência, exportação em CSV,
@@ -280,6 +336,7 @@ WiFiManager (configurar o Wi-Fi sem regravar), um buzzer passivo para diferencia
   O grupo testou o que está descrito como "pronto".
 - Fontes das referências de guarda em [`docs/referencias.md`](docs/referencias.md).
 - Fotos do site (adega, termômetro, rolha, garrafa com luz e vinhedo): **geradas com IA** (ChatGPT) a partir de prompts escritos pelo grupo. Não são fotos reais.
+- Fotos do Node, dos componentes e da caixa em `hardware/fotos/`: **reais**, tiradas pelo grupo.
 - Ícones do site: desenhados pelo grupo em SVG, no mesmo traço.
 
 ## Equipe
