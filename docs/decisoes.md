@@ -301,7 +301,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
-- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). Falta decidir o `docker-compose.yml` vazio da raiz, vídeo, roteiro do pitch e ensaios.
+- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). `docker-compose.yml` vazio da raiz apagado (27/10) e roteiros do vídeo e do hands-on prontos (`docs/roteiro-video.md`, `docs/roteiro-handson.md`). Falta gravar o vídeo (link em `video/link.md`) e ensaiar.
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
@@ -310,7 +310,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
 | 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
 | 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. Ponto de corte em 25/10 (sem código novo a partir daí) |
-| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. Diagrama (023f04a) e manuais (6eedab7) prontos. **Falta:** compose da raiz, vídeo, roteiro e ensaios; entrega no Forms (29) |
+| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. Diagrama (023f04a) e manuais (6eedab7) prontos. Compose da raiz apagado e roteiros prontos. **Falta:** gravar o vídeo, ensaiar e entregar no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
 **Se apertar, cortar nesta ordem:** PWA; calibração da luz; o backend na instância (ficando com ele no PC); telas de vinherias e suspensão no dashboard (o backend já tem).
@@ -412,4 +412,5 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 - **README da raiz reescrito** com o estado real (tudo pronto e testado), fotos do Node, prints do dashboard, "Como rodar" completo (computador e instância) e limitações atualizadas. READMEs do backend, frontend e firmware atualizados; `backend/.env.example` e `config.example.h` sem menção a DuckDNS e Vercel.
 - **Arquivos `.md` não baixam direito do navegador** (0 bytes); mandar em `.zip`. Antes de commitar um arquivo copiado, conferir `wc -l` e o `git diff --stat`.
 - **Diagrama** `docs/arquitetura.png` refeito sem Vercel e HTTPS (023f04a). **Manuais** de instalação e operação publicados (6eedab7); PDFs enviados ao usuário para imprimir.
-- **Pendente da documentação:** o `docker-compose.yml` vazio da raiz (apagar ou preencher com o compose completo; para preencher falta o `mosquitto.conf` da instância).
+- **`docker-compose.yml` vazio da raiz apagado:** a instalação usa o compose do professor (`~/fiware`) mais o nosso override `fiware/docker-compose.backend.yml`, como explica o README.
+- **Roteiros:** `docs/roteiro-video.md` (4 a 5 min) e `docs/roteiro-handson.md` (apresentação de 12 min, no máximo 15, feita por **uma pessoa**). O PDF `roteiro-apresentador.pdf` foi gerado só para estudo e não vai para o Git.
