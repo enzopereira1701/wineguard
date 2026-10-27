@@ -1,8 +1,8 @@
 # WineGuard Dashboard
 
 Front-end do WineGuard (marcha.dev): React 19, React Router 7, Tailwind CSS 4 e Recharts, com Vite.
-Funciona sozinho, com dados de demonstração gerados no navegador. Quando o backend FastAPI estiver
-pronto, basta trocar uma variável do `.env`.
+Fala com o backend FastAPI (`../backend`) e também roda sozinho, com dados de demonstração gerados no navegador.
+**Não é publicado**: roda no computador do grupo e é aberto na apresentação.
 
 ## Rodar
 
@@ -12,23 +12,33 @@ cp .env.example .env     # no Windows: copie o arquivo e renomeie para .env
 npm run dev
 ```
 
-Abra o endereço que aparece no terminal (normalmente http://localhost:5173).
+Abra o endereço que aparece no terminal (normalmente http://localhost:5173). Para abrir no celular, no mesmo Wi-Fi:
+`npm run dev -- --host` e use o endereço `Network:`.
 
-## Dados de demonstração x backend
+## Configuração (`.env`)
 
-| `.env` | O que acontece |
+O `.env` **não vai para o GitHub**. O IP da instância da AWS muda a cada sessão do lab: troque-o aqui.
+
+| Variável | Para quê |
 |---|---|
-| `VITE_USE_MOCK=true` | usa `src/services/mock.js` (simulador de sensores e banco em memória) |
-| `VITE_USE_MOCK=false` | chama o backend em `VITE_API_URL`; os caminhos estão em `src/services/api.js` |
+| `VITE_USE_MOCK` | `true` usa o simulador do navegador (`src/services/mock.js`); `false` chama o backend |
+| `VITE_API_URL` | Endereço do backend, ex.: `http://localhost:8000` ou `http://<IP da instância>:8000` |
+| `VITE_MQTT_HOST` | IP da instância; aparece no bloco de configuração do Node (tela Dispositivos) |
 
-Os formatos de resposta estão em `docs/api-contrato.md`.
+Depois de mudar o `.env`, pare e suba o `npm run dev` de novo.
+
+Os caminhos da API estão em `src/services/api.js` (o único lugar que acessa dados) e os formatos de resposta em `../docs/api-contrato.md`.
+
+## Telas
+
+Início, Painel, Dispositivos, Triggers, Alertas, Vinherias e Suspenso (mais a página de erro). Prints em `../docs/prints/`.
 
 ## Estrutura
 
 ```
 public/            logo, favicons e ícones do PWA
 src/
-  assets/          mídias (vazia por enquanto)
+  assets/          imagens da tela Início
   components/      peças reutilizáveis (Botao, Modal, gráficos, Header...)
   context/         estado global (vinheria, dispositivo, avisos)
   css/             animações
@@ -42,10 +52,4 @@ src/
   main.jsx         ponto de entrada
 ```
 
-## Observações
-
-- O `eslint.config.js` não vem neste zip: o Vite o gera ao criar o projeto. Use o do seu projeto.
-- Não foi possível instalar as bibliotecas no ambiente em que este código foi escrito. A lógica foi testada
-  (funções, simulador e telas no navegador, com versões simplificadas do Router e do Recharts), mas o visual com
-  Tailwind e os gráficos reais devem ser conferidos no primeiro `npm run dev`.
-- Os nomes dos integrantes ficam em `src/data/equipe.js`.
+Os nomes dos integrantes ficam em `src/data/equipe.js`.

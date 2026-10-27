@@ -13,8 +13,8 @@
 #define WIFI_SSID     "Wokwi-GUEST"
 #define WIFI_PASSWORD ""
 
-// Nome (ou IP) da maquina na nuvem onde roda o Mosquitto. Com DuckDNS o nome nao muda.
-#define MQTT_BROKER   "seu-nome.duckdns.org"
+// IP da instancia na nuvem onde roda o Mosquitto. No Learner Lab ele muda a cada sessao: troque e grave de novo.
+#define MQTT_BROKER   "IP_DA_INSTANCIA"
 #define MQTT_PORT     1883
 
 // Mesmos valores cadastrados no FIWARE (veja fiware/scripts/provisionar.sh)

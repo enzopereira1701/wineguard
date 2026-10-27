@@ -5,9 +5,10 @@ Código do ESP32 em Arduino (`wineguard_node/wineguard_node.ino`). Versão atual
 ## O que o firmware faz
 
 - Lê temperatura e umidade (DHT22) e luminosidade (LDR, em % relativa).
-- Avalia os limites sozinho (com histerese) e avisa por **LED RGB**, **buzzer** e **tela OLED**.
+- Avisa por **LED RGB**, **buzzer** e **tela OLED**. Com a nuvem no ar, quem decide o alerta é o **backend** (comando `alert`); o Node só obedece.
 - Publica a telemetria por MQTT (Ultralight 2.0) e obedece aos comandos da nuvem.
-- Se a nuvem sumir por mais de 15 s, continua alertando com os limites guardados na memória.
+- Se a nuvem sumir por mais de 15 s, passa a avaliar os limites sozinho (a tela mostra "OFFLINE (local)") e continua alertando; ao reconectar, volta a obedecer ao backend.
+- Guarda na memória (NVS) os limites, o mute, a suspensão e o intervalo de envio: sobrevivem a reinício e a nova gravação (a menos que a IDE apague a flash, com *Erase All Flash Before Sketch Upload* ligado).
 - Silencia o buzzer pelo botão ou por comando.
 
 Arquitetura (FreeRTOS): o `loop()` cuida de Wi-Fi, MQTT, sensores e telemetria; uma tarefa cuida do botão, do LED e do buzzer
@@ -37,7 +38,7 @@ Arquitetura (FreeRTOS): o `loop()` cuida de Wi-Fi, MQTT, sensores e telemetria; 
    | Adafruit BusIO (dependência) | 1.17.4 |
 
    Para ver as versões instaladas: Gerenciar Bibliotecas, filtro "Instaladas". Pacote esp32 usado na bancada: **3.3.11**.
-3. Copie `config.example.h` para `config.h` (mesma pasta) e preencha. Na bancada, `SIMULACAO_WOKWI` é **0**.
+3. Copie `config.example.h` para `config.h` (mesma pasta) e preencha. Na bancada, `SIMULACAO_WOKWI` é **0**. Em `MQTT_BROKER` vai o **IP da instância da AWS**, que muda a cada sessão do lab: troque e grave de novo. Abra o sketch **direto da pasta do repositório** na Arduino IDE (a IDE pode ter outra cópia do firmware, e é essa cópia que ela grava).
 4. Selecione a placa **DOIT ESP32 DEVKIT V1** (na bancada; a **ESP32 Dev Module** também funciona) e a porta COM.
 5. Grave. Se aparecer `Invalid head of packet (0x80)`, baixe o **Upload Speed** para 115200, use um cabo USB curto e de dados,
    ligado direto no computador, e feche outros programas que usem a porta.
@@ -51,6 +52,7 @@ Arquitetura (FreeRTOS): o `loop()` cuida de Wi-Fi, MQTT, sensores e telemetria; 
 | `ALTA_CONTINUO` | 1 | **0** para o alerta alto ser 1 bipe longo repetido, em vez de tom contínuo |
 | `LDR_INVERTIDO` | 1 | 0 se o valor de luz **subir** ao cobrir o sensor |
 | `BOTAO_PRESSIONADO` | detectado sozinho | `LOW` ou `HIGH`, só se a detecção errar |
+| `CLIENT_SUFIXO` | vazio | Texto acrescentado ao *client id* do MQTT. No Wokwi use `"_sim"`, para a simulação e a placa física não se derrubarem ao usar o mesmo `DEVICE_ID` |
 
 ## Alertas
 
@@ -85,7 +87,8 @@ Comandos    <DEVICE_ID>@<comando>|<parametros>
 | 2.2 | Botão lido na tarefa dos atuadores (não perde aperto quando a rede trava) |
 | 2.3 | Botão detecta a polaridade sozinho e confirma o aperto por 20 ms; bipes novos: ALTA 1 bipe longo (ou contínuo), BAIXA 2 bipes |
 
-## Antes da entrega
+## Notas da bancada
 
-- `AVALIACAO_LOCAL_SEMPRE` está em **1** (o Node avalia sozinho, mesmo conectado). Quando o backend estiver no ar, mude para **0**,
-  para o Node só obedecer aos comandos `alert` (e avaliar sozinho apenas se ficar offline).
+- `AVALIACAO_LOCAL_SEMPRE` está em **0** (no `.ino`): o Node só obedece aos comandos `alert` do backend e avalia sozinho apenas se ficar offline. Em **1** ele avaliaria sempre, mesmo conectado (útil sem backend).
+- O botão de mute guarda o estado: o Node pode aparecer mudo (`mu|1`) por um aperto anterior. Reative em "Reativar som", no dashboard.
+- Sinal de Wi-Fi: a telemetria traz o RSSI (`rs`). Abaixo de uns -85 dBm a conexão pode cair; aproxime o Node do roteador ou use o hotspot do celular (2,4 GHz).

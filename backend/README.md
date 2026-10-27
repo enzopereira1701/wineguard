@@ -1,6 +1,6 @@
 # WineGuard Cloud (backend)
 
-API em FastAPI que liga o dashboard ao FIWARE. **Etapa atual: Backend 3** (triggers, alertas e o vigia que avalia tudo a cada 5 s), sobre o Backend 2 (cadastro de dispositivos no IoT Agent com apikey e resumo) e o Backend 1 (leitura atual, histórico e comandos).
+API em FastAPI que liga o dashboard ao FIWARE. **Pronto (Backends 1 a 4):** leitura atual, histórico e comandos; cadastro de dispositivos no IoT Agent com apikey; triggers, alertas e o vigia que avalia tudo a cada 5 s; vinherias, adegas, suspensão e estabilidade. Tem 176 testes automáticos e roda em **contêiner Docker** na instância da AWS (porta 8000).
 
 ## Rodar
 
@@ -16,7 +16,25 @@ uvicorn app.main:app --reload         # sobe a API em http://127.0.0.1:8000
 
 Documentação interativa: <http://127.0.0.1:8000/docs>. Para ativar o ambiente em outro dia, só o `source .venv/Scripts/activate`.
 
-## Rotas desta etapa
+Rode **um backend só** por vez: se o contêiner da instância estiver no ar, não suba outro no computador (dois vigias duplicam os alertas).
+
+## Rodar em contêiner (Docker)
+
+O `Dockerfile` desta pasta gera a imagem (Python 3.12, só as dependências de `requirements.txt` e a pasta `app/`; o `.env` **não** entra na imagem). Na instância da AWS ele sobe como o serviço `wineguard-backend` do Compose do FIWARE, por um override
+(`fiware/docker-compose.backend.yml`, na raiz do repositório):
+
+```bash
+cp ~/wineguard/fiware/docker-compose.backend.yml ~/fiware/docker-compose.override.yml
+cd ~/fiware && sudo docker compose up -d --build wineguard-backend
+sudo docker logs --tail 20 wineguard-backend
+```
+
+- A configuração vem de `~/wineguard/backend/.env`, com `FIWARE_HOST=host.docker.internal`: o contêiner fala com o Orion (1026), o STH-Comet (8666) e o IoT Agent (4041) pelas portas publicadas no host. Por isso essas portas podem ficar **fechadas** no Security Group; só 22, 1883 e 8000 ficam abertas.
+- `restart: unless-stopped`: depois de um novo *Start Lab* ele sobe sozinho. Para atualizar: `git pull` e repita o `up -d --build`.
+- `CORS_ORIGINS=*` na instância deixa o dashboard abrir de qualquer endereço (inclusive o celular). É uma demonstração sem login.
+- O IP da instância muda a cada sessão, mas o `.env` do backend **não** muda (ele usa `host.docker.internal`).
+
+## Rotas
 
 | Rota | O que faz |
 |---|---|
