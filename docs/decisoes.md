@@ -209,8 +209,8 @@ Telas:
 ## 9. Documentação
 
 - **README (GitHub):** emblema, problema e solução, prints e foto do Node, arquitetura em camadas (percepção, comunicação, plataforma, aplicação, apresentação), modelo de vinherias, hardware, protocolo, referências de guarda, como rodar, estrutura do repositório, **limitações e evolução**, créditos (FIWARE Descomplicado do prof. Fábio Cabrini, uso de IA) e equipe.
-- **Manual impresso:** **um PDF único**, A4, com guia rápido de 1 página, instalação (hardware e software) e operação. **Sem fotos**: ilustrações esquemáticas desenhadas, preto e branco, passos numerados, caixas Atenção e Dica, listas com caixinha, links por extenso e QR code, capa, sumário e rodapé.
-- A fonte do manual fica em Markdown em `docs/`, e o PDF é gerado no fim. As figuras do esquema de ligação e da caixa só depois da montagem e do modelo 3D prontos.
+- **Manuais (decidido em 27/10, o professor quer impresso):** **dois** documentos, `docs/manual-instalacao.md` (6 páginas em PDF) e `docs/manual-operacao.md` (7 páginas), com o mesmo conteúdo em Markdown (Git) e em PDF A4 (impressão). Têm capa, esquema de ligação, fotos do Node, prints do dashboard, tabelas de problemas e rodapé com página. Os PDFs ficam fora do Git (gerados a partir do `.md`).
+- A fonte dos manuais fica em Markdown em `docs/`; o PDF é gerado a partir dela (Chromium/Playwright).
 - Outros: `docs/arquitetura.png`, `docs/referencias.md`, `hardware/firmware/README.md`, `hardware/lista-de-materiais.md`, `hardware/esquema-ligacao.png`.
 - Entrega no Forms: link do GitHub com o `.ino`, nomes, descrição, arquitetura, manuais, código do dashboard comentado com `requirements.txt`, link do Wokwi (LDR e DHT22) e o vídeo.
 
@@ -301,7 +301,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 - **Node:** conferir o mute antes da demo (o botão guarda o estado; reativar pelo dashboard se estiver mudo).
 - **Hardware:** esquema de ligação final (a figura do manual). Caixa montada, teste ponta a ponta feito e fotos em `hardware/fotos/` (15/10).
 - **Nuvem:** nada pendente de código. Ensaio completo do dia (Start Lab até a demo) pode ser repetido na semana do hands-on.
-- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); falta o diagrama de arquitetura (a versão atual cita Vercel e HTTPS), decidir o `docker-compose.yml` vazio da raiz, manuais em PDF, vídeo, roteiro do pitch e ensaios.
+- **Documentação:** README completo e READMEs de backend, frontend e firmware (feitos em 27/10); diagrama de arquitetura atualizado (23f04a) e manuais de instalação e operação (6eedab7, 27/10). Falta decidir o `docker-compose.yml` vazio da raiz, vídeo, roteiro do pitch e ensaios.
 
 ### Cronograma (8 a 30/10)
 | Período | Foco |
@@ -310,7 +310,7 @@ Depois, conferir que o `public/` e o `vercel.json` continuam lá. Outra opção,
 | 10 e 11/10 | **Feito:** margem do backend, decisão sobre as lacunas e dashboard ligado ao backend real e validado (adiantou 12 a 14/10) |
 | 12 a 18/10 | **Feito:** folga (12 a 14), teste ponta a ponta com o Node na caixa (15), dashboard no GitHub, prints, `wgn001` e `wgn003` removidos (16), margem (17) e, em 18/10, o backend na instância e as portas 1026, 4041 e 8666 fechadas (adiantou 19 e 20) |
 | 19 a 25/10 | **Feito:** backend voltando sozinho após o Start Lab (20) e, em 24/10, Node regravado com o IP do dia, testes na nuvem (identificar, triggers, mute) e dashboard no celular. Ponto de corte em 25/10 (sem código novo a partir daí) |
-| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. **Falta:** diagrama, compose da raiz, manuais em PDF, vídeo, roteiro e ensaios; entrega no Forms (29) |
+| 26 a 29/10 | **Feito (27/10):** README e READMEs menores. Diagrama (023f04a) e manuais (6eedab7) prontos. **Falta:** compose da raiz, vídeo, roteiro e ensaios; entrega no Forms (29) |
 | 30/10 | Hands-on (até 1h30: chegar 30 minutos antes para ligar o lab e trocar o IP) |
 
 **Se apertar, cortar nesta ordem:** PWA; calibração da luz; o backend na instância (ficando com ele no PC); telas de vinherias e suspensão no dashboard (o backend já tem).
@@ -411,4 +411,5 @@ sobrevive ao reinício; só o IP muda (atualizar `FIWARE_HOST` e `MQTT_BROKER`).
 ### 27/10/2026: README e READMEs menores
 - **README da raiz reescrito** com o estado real (tudo pronto e testado), fotos do Node, prints do dashboard, "Como rodar" completo (computador e instância) e limitações atualizadas. READMEs do backend, frontend e firmware atualizados; `backend/.env.example` e `config.example.h` sem menção a DuckDNS e Vercel.
 - **Arquivos `.md` não baixam direito do navegador** (0 bytes); mandar em `.zip`. Antes de commitar um arquivo copiado, conferir `wc -l` e o `git diff --stat`.
-- **Pendentes da documentação:** diagrama `docs/arquitetura.png` (cita Vercel e HTTPS) e o `docker-compose.yml` vazio da raiz (apagar ou preencher com o compose completo; para preencher falta o `mosquitto.conf` da instância).
+- **Diagrama** `docs/arquitetura.png` refeito sem Vercel e HTTPS (023f04a). **Manuais** de instalação e operação publicados (6eedab7); PDFs enviados ao usuário para imprimir.
+- **Pendente da documentação:** o `docker-compose.yml` vazio da raiz (apagar ou preencher com o compose completo; para preencher falta o `mosquitto.conf` da instância).
