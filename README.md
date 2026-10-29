@@ -74,7 +74,7 @@ com confirmação do Node, "Identificar Node", queda e retorno da conexão e sus
 
 - **Simulação no Wokwi:** https://wokwi.com/projects/476972184977904641
 - **Dashboard:** não é publicado. Roda no computador do grupo (`npm run dev`) e é aberto na apresentação, ligado ao backend na nuvem.
-- **Vídeo:** _(em breve, veja `video/link.md`)_
+- **Vídeo:** https://youtu.be/-WqCwfTrkNc
 - **Diferenciais:** [`docs/diferenciais.md`](docs/diferenciais.md)
 
 <p align="center">
