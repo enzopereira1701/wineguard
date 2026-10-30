@@ -13,12 +13,12 @@ Projeto do grupo **marcha.dev** para o **CP5 Vinheria Full**. Base: *FIWARE Smar
 
 ## Sumário
 
-1. [O problema](#o-problema) · 2. [A solução](#a-solução) · 3. [Diferenciais](#diferenciais) · 4. [Status do projeto](#status-do-projeto)
-5. [Demonstração](#demonstração) · 6. [Arquitetura](#arquitetura) · 7. [Várias vinherias](#várias-vinherias)
-8. [O Node (hardware)](#o-wineguard-node-hardware) · 9. [Alertas](#como-o-node-avisa) · 10. [Protocolo](#protocolo-mqtt)
-11. [Plataforma FIWARE](#plataforma-fiware) · 12. [Dashboard](#dashboard) · 13. [Referências de guarda](#referências-de-guarda)
-14. [Como rodar](#como-rodar) · 15. [Estrutura do repositório](#estrutura-do-repositório) · 16. [Limitações e evolução](#limitações-e-evolução)
-17. [Créditos](#créditos) · 18. [Equipe](#equipe)
+1\. [O problema](#o-problema) · 2. [A solução](#a-solução) · 3. [Diferenciais](#diferenciais) · 4. [Status do projeto](#status-do-projeto)  
+5\. [Demonstração](#demonstração) · 6. [Arquitetura](#arquitetura) · 7. [Várias vinherias](#várias-vinherias)  
+8\. [O Node (hardware)](#o-wineguard-node-hardware) · 9. [Alertas](#como-o-node-avisa) · 10. [Protocolo](#protocolo-mqtt)  
+11\. [Plataforma FIWARE](#plataforma-fiware) · 12. [Dashboard](#dashboard) · 13. [Referências de guarda](#referências-de-guarda)  
+14\. [Como rodar](#como-rodar) · 15. [Estrutura do repositório](#estrutura-do-repositório) · 16. [Limitações e evolução](#limitações-e-evolução)  
+17\. [Créditos](#créditos) · 18. [Equipe](#equipe)  
 
 ## O problema
 
